@@ -18,6 +18,12 @@ It standardizes the cycle from analyst specification and Pixso design to impleme
 
 The extension answers in Russian by default.
 
+## Usage
+
+Step-by-step instruction for using this extension inside a frontend project:
+
+- `docs/usage.md`
+
 ## Installation
 
 Install from the private repository:
