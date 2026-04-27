@@ -82,6 +82,10 @@ The command:
 
 Validates an analyst specification before implementation.
 
+### `/work:init-project`
+
+Bootstraps project-level Qwen context (`QWEN.md` + `.qwen/`) in a frontend repository without overwriting existing files.
+
 ### `/work:plan`
 
 Creates an implementation plan from a validated spec and design.
