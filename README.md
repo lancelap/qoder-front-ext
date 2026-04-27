@@ -84,7 +84,7 @@ Validates an analyst specification before implementation.
 
 ### `/work:init-project`
 
-Bootstraps project-level Qwen context (`QWEN.md` + `.qwen/`) in a frontend repository without overwriting existing files.
+Bootstraps project-level Qwen context (`QWEN.md` + `.qwen/`) in a frontend repository without overwriting existing files. Also creates `templates/qwen-project/` as a copy of the templates for convenient reuse.
 
 ### `/work:plan`
 

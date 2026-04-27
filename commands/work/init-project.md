@@ -15,6 +15,7 @@ Hard rules:
 1. Do not overwrite existing `QWEN.md` or `.qwen/` files without explicit approval.
 2. If files already exist, propose a minimal diff instead of reinitializing.
 3. After initialization, print a short checklist of what the developer must customize (component inventory, verification commands, architecture facts).
+4. Also create `templates/qwen-project/` as a copy of the initialized templates, without overwriting existing template files.
 
 Output:
 1. Files created and why.

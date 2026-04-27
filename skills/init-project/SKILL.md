@@ -29,6 +29,17 @@ Target files (project root):
 
 If any file already exists, skip it and report that it was skipped.
 
+Additionally, create a `templates/qwen-project/` folder that contains a copy of the same templates for future reuse:
+
+- `templates/qwen-project/QWEN.md`
+- `templates/qwen-project/.qwen/skills/project-architecture/SKILL.md`
+- `templates/qwen-project/.qwen/skills/component-inventory/SKILL.md`
+- `templates/qwen-project/.qwen/skills/local-verification/SKILL.md`
+- `templates/qwen-project/.qwen/skills/frontend-rules/SKILL.md`
+- `templates/qwen-project/.qwen/agents/domain-expert.md`
+
+Do not overwrite existing files under `templates/qwen-project/` without explicit approval.
+
 ## Template Contents
 
 ### `QWEN.md`
@@ -111,6 +122,7 @@ Return:
 
 1. Files created.
 2. Files skipped.
+3. Template files created under `templates/qwen-project/` and which ones were skipped.
 3. Required next steps for developer customization:
    - Update core UI import paths.
    - Fill project-specific reusable components in `component-inventory`.
