@@ -224,3 +224,23 @@ Superpowers skills импортированы в extension и доступны Q
 - Держите `local-verification` актуальным.
 - Спеку и дизайн лучше сохранять в проект (`docs/specs/...`, `docs/design/...`).
 - При изменениях больших проектных компонентов всегда фиксируйте в PR summary “какие страницы могут затронуться”.
+
+## 7) Практичный режим для больших Pixso-экранов
+
+Если задача крупная и визуальная, не начинайте с полного `/work:orchestrate`.
+
+Лучше такой порядок:
+
+1. `/work:validate-spec`
+2. `/work:plan`
+3. короткие implementation prompts по одному этапу
+
+Готовые шаблоны и сценарии лежат здесь:
+
+- `docs/prompt-packs/pixso-screen-iteration/`
+- `docs/prompt-packs/INDEX.md`
+- `docs/usage-scenarios.md`
+
+Если пользователь не знает, какой prompt выбрать, стартовая точка всегда одна:
+
+- `docs/prompt-packs/INDEX.md`

@@ -23,6 +23,27 @@ The extension answers in Russian by default.
 Step-by-step instruction for using this extension inside a frontend project:
 
 - `docs/usage.md`
+- `docs/usage-scenarios.md`
+- `docs/prompt-packs/INDEX.md`
+
+## Quick Start
+
+If you are implementing a large Pixso-driven screen, do not start with `/work:orchestrate`.
+
+Recommended entrypoints:
+
+1. Read `docs/usage-scenarios.md`
+2. Open `docs/prompt-packs/INDEX.md`
+3. Start with:
+   - `00-validate-spec.md` for readiness check
+   - `01-plan.md` for iterative planning
+   - then one implementation prompt per step
+
+If the screen is already implemented and only corrections are needed:
+
+- use `07-fix-mapping.md`
+- use `08-fix-behavior.md`
+- use `09-fix-visual-alignment.md`
 
 ## Installation
 
@@ -192,6 +213,11 @@ Until Pixso MCP is available, provide design input through:
 3. Exported text.
 4. Designer comments.
 5. Existing page reference.
+
+For practical iterative usage with Pixso-based screens, see:
+
+- `docs/usage-scenarios.md`
+- `docs/prompt-packs/INDEX.md`
 
 ## Dirty Git Policy
 
