@@ -8,14 +8,13 @@
 
 | Ситуация | Что использовать |
 | --- | --- |
-| Есть сырая спека, нужно понять, можно ли начинать | `pixso-screen-iteration/00-validate-spec.md` |
-| Нужен только план без правок | `pixso-screen-iteration/01-plan.md` |
-| Нужно собрать экран по Pixso по шагам | `pixso-screen-iteration/README.md` |
-| Нужно сделать только layout страницы | `pixso-screen-iteration/02-layout.md` |
+| Нужно собрать экран по Pixso маленькими итерациями | `pixso-screen-iteration/README.md` |
+| Нужно сначала сделать frontend handoff без кода | `pixso-screen-iteration/00-handoff.md` |
+| Нужно понять, какие компоненты проекта переиспользовать | `pixso-screen-iteration/01-component-map.md` |
+| Нужно сделать только skeleton страницы | `pixso-screen-iteration/02-skeleton.md` |
 | Нужно сделать только фильтры | `pixso-screen-iteration/03-filters.md` |
-| Нужно сделать только tabs и static table | `pixso-screen-iteration/04-tabs-table.md` |
-| Нужно добавить selection и states | `pixso-screen-iteration/05-selection-states.md` |
-| Нужна только финальная полировка | `pixso-screen-iteration/06-polish-review.md` |
+| Нужно сделать table, tabs и selection | `pixso-screen-iteration/04-table-selection.md` |
+| Нужно закрыть states и responsive QA | `pixso-screen-iteration/05-states-responsive-qa.md` |
 | Реализация почти верная, но поломан mapping | `pixso-screen-iteration/07-fix-mapping.md` |
 | Реализация почти верная, но поведение неверное | `pixso-screen-iteration/08-fix-behavior.md` |
 | Реализация почти верная, но визуал не совпадает | `pixso-screen-iteration/09-fix-visual-alignment.md` |
@@ -26,8 +25,9 @@
 
 1. Откройте `docs/usage-scenarios.md`.
 2. Найдите подходящий сценарий.
-3. Перейдите в этот индекс или сразу в нужный prompt.
-4. Скопируйте markdown-шаблон в Qwen.
+3. Начните с `pixso-screen-iteration/00-handoff.md`.
+4. После handoff сделайте `pixso-screen-iteration/01-component-map.md`.
+5. Только потом переходите к implementation prompts.
 
 Для correction pass:
 

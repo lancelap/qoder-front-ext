@@ -20,8 +20,8 @@ qwen extensions list
 
 Должно быть что-то вроде:
 
-- `qoder-frontend-workflow (0.1.0)`
-- Commands: `/work:orchestrate`, `/work:validate-spec`, `/work:plan`, `/work:review`, `/work:pr-summary`
+- `qoder-frontend-workflow (0.2.0)`
+- Commands: `/work:orchestrate`, `/work:design-iterations`, `/work:validate-spec`, `/work:plan`, `/work:review`, `/work:pr-summary`
 
 ## 1) Подключение extension
 
@@ -170,6 +170,12 @@ qwen -i "Нужно реализовать задачу GB-123. Спека: docs
 Если MCP не подключён, используйте вариант с `docs/specs/...` в репозитории.
 
 ## 4) Быстрые команды без полного цикла
+
+Поэтапно вести Pixso-to-React экран маленькими итерациями:
+
+```text
+/work:design-iterations Экран GB-123. Спека: docs/specs/GB-123.md. Дизайн: <Pixso link>. Нужно идти шагами: handoff -> component map -> skeleton -> filters -> table + selection -> states + responsive QA.
+```
 
 Только валидировать спеку:
 

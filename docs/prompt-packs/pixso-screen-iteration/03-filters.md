@@ -1,36 +1,48 @@
-# Prompt: implement only filters card
+# Prompt: implement filters only
 
 ```md
-Реализуй только этап `FiltersCard`.
+Реализуй только FiltersCard.
 
 Контекст:
-- Дизайн DSL: <path-to-layout-dsl.ts|md>
-- Pixso: <pixso-link>
-- Родительский контейнер страницы уже существует.
+- Handoff: <path-to-handoff.md|pasted-handoff>
+- Component map: <path-to-component-map.md|pasted-map>
+- Дизайн/DSL: <pixso-link|path-to-layout-dsl.ts|md>
+- Skeleton уже реализован.
 
 Scope:
-- Сделать компонент фильтров по DSL.
-- Реализовать контролируемый `FiltersState`.
-- Добавить все поля, label и placeholder.
-- Добавить кнопки `Кнопка` и `Сбросить`.
+- Реализовать все поля фильтра из handoff/DSL.
+- Сделать контролируемое состояние формы.
+- Добавить labels и placeholders строго как в handoff.
+- Реализовать кнопку поиска.
+- Реализовать `Сбросить`.
+- Подключить фильтр к родителю через callbacks (`onSearch`, `onReset` или локальный эквивалент).
 
 Out of scope:
 - Не делать таблицу.
-- Не делать табы.
-- Не делать реальную загрузку данных.
-- Не делать интеграцию с API.
-
-Acceptance:
-- Все поля и тексты соответствуют DSL.
-- Desktop: 4 колонки, tablet: 2, mobile: 1.
-- `Сбросить` очищает форму.
-- Кнопка `Кнопка` вызывает `onSearch(filters)` или эквивалентный handler.
-- Код типизирован и не ломает существующий layout.
+- Не делать selection.
+- Не подключать реальный API.
+- Не делать tabs behavior, кроме required placeholder wiring.
+- Не добавлять loading/empty/error.
 
 Constraints:
-- Не добавлять новую дизайн-систему.
-- Не заменять существующие компоненты проекта без необходимости.
-- Не трогать код вне области FiltersCard, кроме required wiring.
+- Использовать component map.
+- Не добавлять зависимости.
+- Не создавать новый generic form framework.
+- Не менять внешний layout за пределами нужного места под FiltersCard.
 
-Верни только изменения этого этапа.
+Acceptance:
+- Все поля присутствуют.
+- Все labels/placeholders совпадают.
+- Desktop: 4 колонки.
+- Tablet: 2 колонки.
+- Mobile: 1 колонка.
+- `Сбросить` очищает форму.
+- Search вызывает handler с текущими фильтрами.
+- Код типизирован.
+
+Output:
+- Список изменённых файлов.
+- Что сделано.
+- Как проверить filters вручную.
+- Что осталось на следующие итерации.
 ```

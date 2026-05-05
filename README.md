@@ -35,9 +35,9 @@ Recommended entrypoints:
 1. Read `docs/usage-scenarios.md`
 2. Open `docs/prompt-packs/INDEX.md`
 3. Start with:
-   - `00-validate-spec.md` for readiness check
-   - `01-plan.md` for iterative planning
-   - then one implementation prompt per step
+   - `00-handoff.md` for frontend handoff
+   - `01-component-map.md` for project component reuse
+   - then one implementation prompt per step: skeleton, filters, table + selection, states + responsive QA
 
 If the screen is already implemented and only corrections are needed:
 
@@ -102,6 +102,19 @@ The command:
 ### `/work:validate-spec`
 
 Validates an analyst specification before implementation.
+
+### `/work:design-iterations`
+
+Guides a Pixso-to-React screen through small controlled iterations:
+
+1. handoff
+2. component map
+3. skeleton
+4. filters
+5. table + selection
+6. states + responsive QA
+
+It is the recommended entrypoint when the screen is too large for one `/work:orchestrate` pass.
 
 ### `/work:init-project`
 

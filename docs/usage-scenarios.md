@@ -39,9 +39,10 @@
 
 Что запускать:
 
-1. `/work:validate-spec`
-2. `/work:plan` с требованием разбить на 5-7 итераций
-3. По одному implementation prompt на этап
+1. `/work:design-iterations`
+2. Handoff без кода
+3. Component map без кода
+4. После одобрения: по одному implementation prompt на этап
 
 Используйте пакет:
 
@@ -49,13 +50,12 @@
 
 Порядок:
 
-1. `00-validate-spec.md`
-2. `01-plan.md`
-3. `02-layout.md`
+1. `00-handoff.md`
+2. `01-component-map.md`
+3. `02-skeleton.md`
 4. `03-filters.md`
-5. `04-tabs-table.md`
-6. `05-selection-states.md`
-7. `06-polish-review.md`
+5. `04-table-selection.md`
+6. `05-states-responsive-qa.md`
 
 ## Сценарий 3. Нужно только проверить, готова ли задача к frontend-реализации
 
@@ -168,13 +168,14 @@
 Что делать:
 
 1. Остановить полный orchestration.
-2. Перейти на `/work:validate-spec` и `/work:plan`.
-3. Разбить задачу на короткие implementation prompts.
-4. На каждом этапе явно писать `Out of scope`.
+2. Перейти на `/work:design-iterations`.
+3. Зафиксировать handoff и component map.
+4. Разбить задачу на короткие implementation prompts.
+5. На каждом этапе явно писать `Out of scope`.
 
 Рабочее правило:
 
-- один prompt должен менять один логический слой: layout, filters, table, selection, states или polish.
+- один prompt должен менять один логический слой: skeleton, filters, table + selection или states + responsive QA.
 
 ## Сценарий 9. Нужно работать по Pixso, но без уверенности в картинках
 
@@ -186,15 +187,16 @@
 
 Что делать:
 
-1. Сначала собрать текстовый DSL макета.
-2. Проверить, что в DSL есть:
+1. Сначала собрать `handoff` и, если нужно, текстовый DSL макета.
+2. Проверить, что в handoff/DSL есть:
    - структура экрана;
    - поля формы;
    - таблица/колонки;
    - actions;
    - states;
    - sample data.
-3. Передавать Qwen DSL + Pixso link + короткий scope этапа.
+3. Собрать component map по реальным компонентам проекта.
+4. Передавать Qwen handoff + component map + DSL/Pixso link + короткий scope этапа.
 
 Почему это работает:
 
