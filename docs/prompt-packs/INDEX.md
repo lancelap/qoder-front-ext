@@ -10,6 +10,7 @@ Use this index to choose the right prompt pack.
 | Analyst spec needs UI state review | `analyst-spec/03-review-ui-states.md` |
 | Spec/design must be mapped to component catalog | `analyst-spec/04-catalog-mapping.md` |
 | Generate or review `json-render` screen JSON | `json-render/README.md` |
+| Normalize XML/GraphQL/multiple endpoints for UI | `json-render/00-design-source-adapters.md` |
 | Validate catalog coverage before generation | `json-render/00-validate-catalog-coverage.md` |
 | Generate `screen.render.json` | `json-render/01-generate-json-render-spec.md` |
 | Review generated JSON before runtime render | `json-render/02-review-generated-spec.md` |
