@@ -1,0 +1,200 @@
+{
+  "schemaVersion": "qoder-json-render-screen/v1",
+  "screen": {
+    "id": "PaymentMtNackSecurity",
+    "title": "MT NACK Security",
+    "route": "/tasks/payment-mt-nack-security"
+  },
+  "state": {
+    "selectedDecision": null,
+    "tradeSidePageOpen": false,
+    "finishPending": false,
+    "finishError": null
+  },
+  "dataSources": {
+    "nackContext": {
+      "type": "resolver",
+      "resolverId": "getPaymentMtNackContext",
+      "params": {
+        "taskId": "{{data.task.id}}",
+        "step": "{{data.task.parameters.STEP}}",
+        "tradeId": "{{data.confo.params.TRADE_ID}}"
+      }
+    },
+    "validationErrors": {
+      "type": "resolver",
+      "resolverId": "getMtValidationErrors",
+      "params": {
+        "step": "{{data.nackContext.step}}",
+        "rejectionReason": "{{data.confo.params.MT_CHANNEL_REJECTION_REASON}}",
+        "rejectionDocument": "{{data.confo.params.MT_DOCUMENT_VALIDATION_ERRORS}}"
+      }
+    }
+  },
+  "actions": {
+    "selectNackDecision": {
+      "type": "state.set",
+      "target": "selectedDecision"
+    },
+    "openTradeSidePage": {
+      "type": "state.set",
+      "target": "tradeSidePageOpen",
+      "value": true
+    },
+    "closeTradeSidePage": {
+      "type": "state.set",
+      "target": "tradeSidePageOpen",
+      "value": false
+    },
+    "finishPaymentMtNackSecurity": {
+      "type": "resolver",
+      "resolverId": "finishPaymentMtNackSecurity",
+      "params": {
+        "taskId": "{{data.nackContext.taskId}}",
+        "tradeId": "{{data.nackContext.tradeId}}",
+        "decision": "{{state.selectedDecision}}"
+      },
+      "pendingState": "finishPending",
+      "errorState": "finishError"
+    }
+  },
+  "tree": {
+    "id": "paymentMtNackSecurity.page",
+    "type": "PaymentMtNackSecurityPage",
+    "props": {
+      "title": "MT NACK Security"
+    },
+    "children": [
+      {
+        "id": "paymentMtNackSecurity.validationErrors",
+        "type": "ValidationErrorsBlock",
+        "props": {
+          "data": "{{data.validationErrors}}",
+          "emptyText": "Ошибки валидации не найдены"
+        },
+        "metadata": {
+          "sourceSpec": "Data And API Contracts / Resolver: getMtValidationErrors",
+          "scenarioIds": []
+        }
+      },
+      {
+        "id": "paymentMtNackSecurity.tradePreviewButton",
+        "type": "TradeSidePageTrigger",
+        "props": {
+          "label": "Просмотр сделки",
+          "tradeId": "{{data.nackContext.tradeId}}",
+          "disabled": "{{!data.nackContext.tradeId}}",
+          "sidePageId": "paymentMtNackSecurity.tradeSidePage"
+        },
+        "events": {
+          "onClick": "openTradeSidePage"
+        },
+        "metadata": {
+          "sourceSpec": "Scenario: Open Trade Side Page",
+          "scenarioIds": ["open-trade-side-page"]
+        }
+      },
+      {
+        "id": "paymentMtNackSecurity.resolution",
+        "type": "NackResolutionRadioGroup",
+        "props": {
+          "name": "nackResolution",
+          "value": "{{state.selectedDecision}}",
+          "onChangeAction": "selectNackDecision",
+          "options": [
+            {
+              "value": "fixStaticData",
+              "label": "Исправить статик дату"
+            },
+            {
+              "value": "fixSigners",
+              "label": "Исправить подписантов"
+            },
+            {
+              "value": "sendToReprocess",
+              "label": "Отправить на репроцесс"
+            },
+            {
+              "value": "allCorrect",
+              "label": "Все верно"
+            }
+          ]
+        },
+        "metadata": {
+          "sourceSpec": "Decisions",
+          "scenarioIds": [
+            "finish-static-data",
+            "finish-signers",
+            "send-to-reprocess",
+            "finish-all-correct"
+          ]
+        }
+      },
+      {
+        "id": "paymentMtNackSecurity.tradeSidePage",
+        "type": "TradeSidePage",
+        "props": {
+          "id": "paymentMtNackSecurity.tradeSidePage",
+          "title": "Просмотр сделки",
+          "tradeId": "{{data.nackContext.tradeId}}",
+          "open": "{{state.tradeSidePageOpen}}"
+        },
+        "events": {
+          "onClose": "closeTradeSidePage"
+        },
+        "metadata": {
+          "sourceSpec": "Screen / Side page",
+          "scenarioIds": ["open-trade-side-page"]
+        }
+      }
+    ],
+    "footer": {
+      "id": "paymentMtNackSecurity.footer",
+      "type": "PageFooterActions",
+      "props": {
+        "align": "right"
+      },
+      "children": [
+        {
+          "id": "paymentMtNackSecurity.finish",
+          "type": "FinishTaskButton",
+          "props": {
+            "label": "Закончить",
+            "disabled": "{{!state.selectedDecision || !data.nackContext.taskId || !data.nackContext.tradeId}}",
+            "loading": "{{state.finishPending}}",
+            "actionId": "finishPaymentMtNackSecurity",
+            "params": {
+              "taskId": "{{data.nackContext.taskId}}",
+              "tradeId": "{{data.nackContext.tradeId}}",
+              "decision": "{{state.selectedDecision}}"
+            }
+          },
+          "events": {
+            "onClick": "finishPaymentMtNackSecurity"
+          },
+          "metadata": {
+            "sourceSpec": "Action: finishPaymentMtNackSecurity",
+            "scenarioIds": [
+              "finish-static-data",
+              "finish-signers",
+              "send-to-reprocess",
+              "finish-all-correct",
+              "finish-disabled-without-decision",
+              "finish-action-fails"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "sourceSpec": "docs/examples/payment-mt-nack-security/spec.md",
+    "sourceAdapters": "docs/examples/payment-mt-nack-security/source-adapters.md",
+    "catalog": "docs/examples/payment-mt-nack-security/component-catalog.md",
+    "generatedBy": "qoder",
+    "notes": [
+      "UI components consume normalized nackContext and validationErrors.",
+      "Raw confo paths are only used as resolver input params."
+    ]
+  }
+}
