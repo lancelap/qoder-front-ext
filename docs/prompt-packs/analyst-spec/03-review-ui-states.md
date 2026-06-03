@@ -12,7 +12,7 @@ Use this prompt to check that the analyst spec and design cover the UI states re
 
 Проверь:
 1. Initial state.
-2. Loading state for each async data source.
+2. Loading state for each async store action, resolver, or API-backed component behavior.
 3. Success/data state.
 4. Empty state.
 5. Error state.

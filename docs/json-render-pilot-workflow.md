@@ -36,7 +36,7 @@ Must include for each component:
 - React component/import path;
 - when to use and when not to use;
 - props schema or props contract;
-- required data sources;
+- required store bindings, resolver outputs, or component-owned async behavior;
 - supported actions;
 - supported states;
 - permissions/read-only behavior;
@@ -83,7 +83,7 @@ Must include:
 
 - schema version;
 - screen metadata;
-- data source ids, API references, and resolver references;
+- store state paths, API/action references, and resolver references;
 - action ids and handler references;
 - component tree using only catalog component types;
 - explicit metadata linking back to spec, design, and catalog version.
@@ -134,10 +134,10 @@ The registry is the allowlist. If a component type is not registered, generation
 - The spec has no blocking Given/When/Then, API, state, or permission gaps.
 - Every UI block maps to an existing or explicitly approved proposed catalog component.
 - `screen.render.json` contains no unregistered component types.
-- Every action, data source, and resolver in JSON is traceable to `spec.md`.
+- Every action, store binding, and resolver reference in JSON is traceable to `spec.md`.
 - Transport-specific XML/GraphQL/endpoint mappings are isolated in source adapters.
 - UI components consume app-level contracts, not raw source payloads.
-- Complex behavior remains in catalog components, action handlers, or data adapters.
+- Complex behavior remains in catalog components, store actions, action handlers, or adapters.
 - The pilot identifies whether runtime rendering is viable before wider adoption.
 
 ## Non-Goals

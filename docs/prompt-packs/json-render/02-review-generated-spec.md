@@ -17,7 +17,7 @@ Use this prompt after `screen.render.json` is generated.
 2. schemaVersion корректный.
 3. Все component types есть в registry.
 4. Все props разрешены props schema.
-5. Все dataSources имеют API contracts или resolver contracts.
+5. Все store bindings, resolver references и async actions имеют state/API/resolver contracts.
 6. Все actions имеют handler contract.
 7. Given/When/Then scenarios покрыты tree/actions/states.
 8. Нет invented fields/states/actions/components.
@@ -38,7 +38,7 @@ Scenario coverage:
 
 Runtime readiness:
 - registry:
-- data adapter:
+- store adapter:
 - resolver/source adapter:
 - action adapter:
 - permissions:

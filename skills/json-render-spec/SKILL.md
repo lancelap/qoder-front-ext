@@ -16,11 +16,11 @@ Create or review `json-render` screen specs for `@json-render/react` using proje
 Require:
 
 1. Analyst spec with Given/When/Then scenarios.
-2. API contracts for every async data source and action.
+2. API contracts for every async store action, resolver, and business action.
 3. Design reference or designer-approved UI structure.
 4. Component catalog with allowed component types and props contracts.
 5. Source adapter/resolver contracts for transport-specific data such as XML APIs, GraphQL queries, or multiple backend endpoints.
-6. Registry/action/data adapter notes when available.
+6. Registry/action/store adapter notes when available.
 
 If any required input is missing, block generation and ask for the smallest missing contract.
 
@@ -30,10 +30,10 @@ If any required input is missing, block generation and ask for the smallest miss
 - Do not create arbitrary HTML, CSS, JavaScript, inline functions, or unregistered component types.
 - Do not invent API endpoints, response fields, actions, states, permissions, filters, table columns, or validation rules.
 - Map every user action to an action id from the analyst spec or component catalog.
-- Map every data binding to a documented app-level data source, resolver, or component prop contract.
+- Map every data binding to a documented store state path, resolver output, or component prop contract.
 - Keep XML, GraphQL, endpoint-specific field names, and response shapes inside source adapters or resolvers.
 - Components should receive normalized app-level props such as `tradeId`, not transport-specific paths from XML or GraphQL payloads.
-- Keep complex behavior inside catalog components, action handlers, or data adapters, not inside JSON.
+- Keep complex behavior inside catalog components, store actions, action handlers, or adapters, not inside JSON.
 - If a complex UI block is missing from the catalog, request a separate component spec before generating the screen.
 - Prefer `blocked` over plausible but unsupported JSON.
 
@@ -57,9 +57,8 @@ Example:
 
 ```json
 {
-  "dataSources": {
+  "resolvers": {
     "validationErrors": {
-      "type": "resolver",
       "resolverId": "getMtValidationErrors",
       "params": {
         "step": "{{data.task.parameters.STEP}}",
@@ -71,7 +70,7 @@ Example:
   "tree": {
     "type": "ValidationErrorsBlock",
     "props": {
-      "data": "{{data.validationErrors}}"
+      "data": "{{resolvers.validationErrors}}"
     }
   }
 }
@@ -91,7 +90,7 @@ Use this top-level shape unless the project defines a stricter one:
     "title": "",
     "route": ""
   },
-  "dataSources": {},
+  "resolvers": {},
   "actions": {},
   "tree": {},
   "metadata": {
@@ -112,7 +111,7 @@ Check:
 1. JSON is valid and uses the expected schema version.
 2. Every component type exists in registry.
 3. Every prop is allowed by the component contract.
-4. Every data source has an API or resolver contract.
+4. Every store binding and resolver reference has a state, API, or resolver contract.
 5. Every action has a handler contract.
 6. Permissions/read-only/visibility behavior matches the analyst spec.
 7. Given/When/Then scenarios are covered by tree, actions, states, and adapters.
@@ -126,7 +125,7 @@ Block when:
 
 - a visible UI block has no catalog component;
 - an action has no behavior contract;
-- a data source has no API or resolver contract;
+- a store binding or resolver reference has no state, API, or resolver contract;
 - a component depends directly on XML/GraphQL/source-specific payload fields instead of app-level props;
 - required UI state is absent from spec/catalog;
 - JSON requires a component prop not supported by its contract;

@@ -647,7 +647,7 @@ JSON должен читать store state и вызывать action ids:
 
 Выполнить или вручную применить `docs/prompt-packs/json-render/00-validate-catalog-coverage.md`.
 
-Ожидаемо: каждый component type, action id, state path, data source и resolver задокументирован и зарегистрирован.
+Ожидаемо: каждый component type, action id, state path, store binding и resolver задокументирован и зарегистрирован.
 
 ---
 

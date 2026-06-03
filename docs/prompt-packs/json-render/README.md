@@ -16,8 +16,8 @@ Scope:
 - do not require Vercel hosting or Vercel infrastructure;
 - generate JSON composition, not arbitrary React code;
 - normalize XML, GraphQL, and endpoint-specific payloads through source adapters/resolvers;
-- complex UI behavior belongs in catalog components and action/data adapters.
+- complex UI behavior belongs in catalog components, store actions, action adapters, or source adapters.
 
 Rule:
 
-- generation is blocked if required components, actions, data sources, permissions, or states are missing.
+- generation is blocked if required components, actions, store bindings, resolver contracts, permissions, or states are missing.

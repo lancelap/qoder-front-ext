@@ -8,7 +8,7 @@ Use this prompt to turn analyst scenarios into test cases for a `json-render` sc
 Вход:
 - Analyst spec: <path-or-pasted-spec>
 - screen.render.json: <path-or-pasted-json>
-- Registry/action/data adapter notes: <path-or-pasted-notes>
+- Registry/store/action adapter notes: <path-or-pasted-notes>
 - Test framework: <vitest|jest|playwright|manual-checklist>
 
 Нужно:

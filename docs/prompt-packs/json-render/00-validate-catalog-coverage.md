@@ -16,7 +16,7 @@ Use this prompt before generating `screen.render.json`.
 2. Все component types есть в registry или явно proposed.
 3. Все props, которые нужны spec, разрешены props schema компонента.
 4. Все actions из spec имеют action id и owner.
-5. Все data sources имеют API contract или resolver contract.
+5. Все store bindings, resolver references и async actions имеют state/API/resolver contract.
 6. Все permissions/read-only/forbidden rules описаны.
 7. Все required states покрыты spec или catalog component.
 8. XML/GraphQL/разные ручки нормализуются через source adapters/resolvers.
@@ -27,11 +27,11 @@ Use this prompt before generating `screen.render.json`.
 Verdict: ready | ready with risks | blocked
 
 Coverage:
-| UI block | Component | Registry status | Data/resolver | Actions | States | Verdict |
+| UI block | Component | Registry status | Store/resolver | Actions | States | Verdict |
 | --- | --- | --- | --- | --- | --- | --- |
 
 Blockers:
-- <specific missing contract/component/action/data/resolver/state>
+- <specific missing contract/component/action/store-binding/resolver/state>
 
 Allowed assumptions:
 - <only assumptions explicitly supported by spec/catalog>
@@ -39,6 +39,6 @@ Allowed assumptions:
 Правила:
 - Если хотя бы один visible block не имеет catalog mapping, verdict blocked.
 - Если action не имеет API/local behavior, verdict blocked.
-- Если data source ссылается на XML/GraphQL/raw endpoint без resolver/app-level contract, verdict blocked.
+- Если store binding или resolver reference ссылается на XML/GraphQL/raw endpoint без resolver/app-level contract, verdict blocked.
 - Если missing state не влияет на generation, можно ready with risks, но укажи residual risk.
 ```

@@ -20,7 +20,7 @@ Output file:
 1. Используй только component types из catalog/registry.
 2. Каждый component должен иметь stable id.
 3. Props должны соответствовать props schema компонента.
-4. Data bindings должны ссылаться только на app-level data sources или resolvers из spec/source adapters.
+4. Data bindings должны ссылаться только на documented store state paths, resolver outputs или component prop contracts из spec/source adapters.
 5. Actions должны ссылаться только на action ids из spec/catalog.
 6. Permissions/read-only/visibility должны соответствовать spec.
 7. States должны быть только из spec или из documented catalog behavior.
@@ -36,7 +36,6 @@ Output format:
   {
     "schemaVersion": "qoder-json-render-screen/v1",
     "screen": { ... },
-    "dataSources": { ... },
     "resolvers": { ... },
     "actions": { ... },
     "tree": { ... },
