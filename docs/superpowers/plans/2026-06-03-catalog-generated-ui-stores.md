@@ -1,18 +1,18 @@
-# Catalog Generated UI Stores Implementation Plan
+# План имплементации сторов для Generated UI в `catalog`
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Для агентных исполнителей:** ОБЯЗАТЕЛЬНЫЙ ПОДНАВЫК: используйте `superpowers:subagent-driven-development` (рекомендуется) или `superpowers:executing-plans`, чтобы выполнять этот план по задачам. Шаги используют синтаксис чекбоксов (`- [ ]`) для отслеживания прогресса.
 
-**Goal:** Перевести `catalog` на `json-render` Controlled Mode: JSON описывает UI, а бизнес-логика из хуков переносится в TypeScript store, resolvers, mappers и api layer.
+**Цель:** Перевести `catalog` на `json-render` в controlled mode: JSON описывает UI, а бизнес-логика из хуков переносится в TypeScript store, resolvers, mappers и слой API.
 
-**Architecture:** `json-render` остается renderer-слоем. `Zustand` store становится single source of truth для form/ui/data/loading/errors, dependent filters, table view models, modal/side page state и business actions. Старые React hooks должны стать тонкими adapters/selectors либо быть удалены после миграции потребителей.
+**Архитектура:** `json-render` остается слоем рендера. `Zustand` store становится единым источником истины для `form`, `ui`, `data`, `loading`, `errors`, зависимых фильтров, табличных view models, состояния modal/side page и бизнес-действий. Старые React hooks должны стать тонкими adapters/selectors либо быть удалены после миграции потребителей.
 
-**Tech Stack:** React, TypeScript, `@json-render/react`, Zustand vanilla store, Vitest или текущий test runner проекта `catalog`, project-owned component registry/action registry.
+**Технологии:** React, TypeScript, `@json-render/react`, Zustand vanilla store, Vitest или текущий test runner проекта `catalog`, project-owned component registry/action registry.
 
 ---
 
-## Scope And Assumptions
+## Область и допущения
 
-Текущий checkout `qoder-front-ext` содержит workflow-документацию и пример `Payment MT NACK Security`, но не содержит исходники целевого приложения `catalog`. Поэтому план фиксирует целевую структуру и порядок миграции. Перед исполнением в реальном `catalog` нужно выполнить Task 1 и заменить предложенные пути на фактические пути проекта, если они отличаются.
+Текущий checkout `qoder-front-ext` содержит workflow-документацию и пример `Payment MT NACK Security`, но не содержит исходники целевого приложения `catalog`. Поэтому план фиксирует целевую структуру и порядок миграции. Перед исполнением в реальном `catalog` нужно выполнить Задачу 1 и заменить предложенные пути на фактические пути проекта, если они отличаются.
 
 Ограничения из `QWEN.md`:
 
@@ -24,79 +24,79 @@
 Главное архитектурное правило:
 
 ```text
-JSON describes UI.
-TypeScript owns logic.
+JSON описывает UI.
+TypeScript владеет логикой.
 ```
 
 ---
 
-## Target File Structure
+## Целевая структура файлов
 
-### Shared generated-ui runtime
+### Shared runtime для `generated-ui`
 
-- Create: `src/shared/generated-ui/store/generatedUi.types.ts`
+- Создать: `src/shared/generated-ui/store/generatedUi.types.ts`
   - Общие типы `Option`, `DateRange`, `GeneratedUiLoading`, `GeneratedUiErrors`.
-- Create: `src/shared/generated-ui/store/createGeneratedUiStateBridge.ts`
+- Создать: `src/shared/generated-ui/store/createGeneratedUiStateBridge.ts`
   - Adapter между feature store и `StateProvider`.
-- Create: `src/shared/generated-ui/renderer/GeneratedScreen.tsx`
+- Создать: `src/shared/generated-ui/renderer/GeneratedScreen.tsx`
   - Runtime renderer, который принимает schema, component registry, action registry и state bridge.
-- Create: `src/shared/generated-ui/renderer/componentRegistry.ts`
+- Создать: `src/shared/generated-ui/renderer/componentRegistry.ts`
   - Base registry для разрешенных layout/control components, если в проекте еще нет такого registry.
-- Create: `src/shared/generated-ui/renderer/actionRegistry.types.ts`
+- Создать: `src/shared/generated-ui/renderer/actionRegistry.types.ts`
   - Типизированный контракт action registry.
-- Create: `src/shared/generated-ui/table/table.types.ts`
+- Создать: `src/shared/generated-ui/table/table.types.ts`
   - `CellType`, `TableColumn`, `TableRow`, `TableViewModel`.
-- Create: `src/shared/generated-ui/table/getValueByAccessor.ts`
+- Создать: `src/shared/generated-ui/table/getValueByAccessor.ts`
   - Доступ к значениям строк по `accessor`, без бизнес-логики.
-- Create: `src/shared/generated-ui/table/cellRenderers.tsx`
+- Создать: `src/shared/generated-ui/table/cellRenderers.tsx`
   - Отображение `text`, `amount`, `date`, `status`, `badge`, `link`, `errorList`.
-- Create or modify: `src/shared/generated-ui/table/TableRenderer.tsx`
+- Создать или изменить: `src/shared/generated-ui/table/TableRenderer.tsx`
   - Табличный catalog component, который получает готовые `columns` и `rows`.
 
-### Catalog feature
+### Feature `catalog`
 
-- Create: `src/features/catalog/model/catalogGeneratedUiStore.ts`
+- Создать: `src/features/catalog/model/catalogGeneratedUiStore.ts`
   - Zustand vanilla store для screen state и actions.
-- Create: `src/features/catalog/model/catalogGeneratedUi.types.ts`
+- Создать: `src/features/catalog/model/catalogGeneratedUi.types.ts`
   - Типы состояния `CatalogGeneratedUiState`, `CatalogFilters`, actions, store dependencies.
-- Create: `src/features/catalog/model/catalogGeneratedUi.actions.ts`
+- Создать: `src/features/catalog/model/catalogGeneratedUi.actions.ts`
   - Action registry, который вызывает методы store по именам из JSON.
-- Create: `src/features/catalog/model/catalogGeneratedUi.selectors.ts`
+- Создать: `src/features/catalog/model/catalogGeneratedUi.selectors.ts`
   - Селекторы для старых React consumers и тестов.
-- Create: `src/features/catalog/model/filters/catalogFilter.types.ts`
+- Создать: `src/features/catalog/model/filters/catalogFilter.types.ts`
   - Типы фильтров catalog.
-- Create: `src/features/catalog/model/filters/mapCatalogFilterOptions.ts`
-  - Mapping raw API options to `Option`.
-- Create: `src/features/catalog/model/table/catalogTable.types.ts`
+- Создать: `src/features/catalog/model/filters/mapCatalogFilterOptions.ts`
+  - Mapping raw API options в `Option`.
+- Создать: `src/features/catalog/model/table/catalogTable.types.ts`
   - Raw/view model типы строк catalog table.
-- Create: `src/features/catalog/model/table/getCatalogTableViewModel.ts`
+- Создать: `src/features/catalog/model/table/getCatalogTableViewModel.ts`
   - Resolver, который вызывает API и возвращает `TableViewModel`.
-- Create: `src/features/catalog/model/table/buildCatalogColumns.ts`
+- Создать: `src/features/catalog/model/table/buildCatalogColumns.ts`
   - Динамические колонки на основе meta/permissions/spec.
-- Create: `src/features/catalog/model/table/buildCatalogRows.ts`
-  - Mapping raw API rows to normalized rows.
-- Modify or create: `src/features/catalog/api/catalogApi.ts`
+- Создать: `src/features/catalog/model/table/buildCatalogRows.ts`
+  - Mapping raw API rows в normalized rows.
+- Изменить или создать: `src/features/catalog/api/catalogApi.ts`
   - API facade, если текущие хуки ходят в API напрямую.
-- Modify: `src/features/catalog/hooks/*.ts`
+- Изменить: `src/features/catalog/hooks/*.ts`
   - Удалить бизнес-логику из хуков. Оставить thin adapters только если есть legacy consumers.
-- Create or modify: `src/pages/catalog/catalog.schema.json`
-  - JSON bindings to store state and action names.
-- Create or modify: `src/pages/catalog/CatalogGeneratedPage.tsx`
+- Создать или изменить: `src/pages/catalog/catalog.schema.json`
+  - JSON bindings к store state и action names.
+- Создать или изменить: `src/pages/catalog/CatalogGeneratedPage.tsx`
   - Page wrapper, который вызывает `store.init()` и подключает `StateProvider`.
 
-### Tests
+### Тесты
 
-- Create: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
-- Create: `src/features/catalog/model/table/getCatalogTableViewModel.test.ts`
-- Create: `src/features/catalog/model/table/buildCatalogColumns.test.ts`
-- Create: `src/features/catalog/model/table/buildCatalogRows.test.ts`
-- Create or modify: `src/pages/catalog/CatalogGeneratedPage.test.tsx`
+- Создать: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
+- Создать: `src/features/catalog/model/table/getCatalogTableViewModel.test.ts`
+- Создать: `src/features/catalog/model/table/buildCatalogColumns.test.ts`
+- Создать: `src/features/catalog/model/table/buildCatalogRows.test.ts`
+- Создать или изменить: `src/pages/catalog/CatalogGeneratedPage.test.tsx`
 
 ---
 
-## Store Contract
+## Контракт store
 
-Целевой state shape:
+Целевая форма state:
 
 ```ts
 export type CatalogGeneratedUiState = {
@@ -117,7 +117,7 @@ export type CatalogGeneratedUiState = {
 };
 ```
 
-Целевой store shape:
+Целевая форма store:
 
 ```ts
 export type CatalogGeneratedUiStore = {
@@ -133,95 +133,95 @@ export type CatalogGeneratedUiStore = {
 };
 ```
 
-Фильтры добавляются явно после inventory. Для каждого dependent filter нужен action вида:
+Фильтры добавляются явно после инвентаризации. Для каждого зависимого фильтра нужен action вида:
 
 ```ts
 setParentFilter: (value: Option | null) => Promise<void>;
 setChildFilter: (value: Option | null) => Promise<void>;
 ```
 
-Правило для dependent filters:
+Правило для зависимых фильтров:
 
 ```text
-parent change
-  -> set parent value
-  -> reset downstream form values
-  -> clear downstream options
-  -> load direct child options
+изменение родительского фильтра
+  -> записать значение родителя
+  -> сбросить downstream значения формы
+  -> очистить downstream options
+  -> загрузить options прямого дочернего фильтра
 ```
 
 Правило для таблицы:
 
 ```text
-input change does not reload table
-applyFilters copies form.filters to appliedFilters
-loadCatalogTable reads only appliedFilters
+изменение input не перезагружает таблицу
+applyFilters копирует form.filters в appliedFilters
+loadCatalogTable читает только appliedFilters
 ```
 
 ---
 
-## Task 1: Inventory Existing Catalog Hooks
+## Задача 1: Инвентаризировать существующие catalog hooks
 
-**Files:**
+**Файлы:**
 
-- Read: `src/features/catalog/hooks/*.ts`
-- Read: `src/features/catalog/**/*.tsx`
-- Read: `src/pages/catalog/**/*`
-- Read: current API layer used by catalog hooks
-- Create: `docs/catalog-store-migration-inventory.md`
+- Прочитать: `src/features/catalog/hooks/*.ts`
+- Прочитать: `src/features/catalog/**/*.tsx`
+- Прочитать: `src/pages/catalog/**/*`
+- Прочитать: текущий API layer, который используют catalog hooks
+- Создать: `docs/catalog-store-migration-inventory.md`
 
-- [ ] **Step 1: Check repository state**
+- [ ] **Шаг 1: Проверить состояние репозитория**
 
-Run:
+Выполнить:
 
 ```bash
 git status --short --branch
 ```
 
-Expected: list changed files before any source edits. If dirty, ask whether to continue, stash, or stop.
+Ожидаемо: список измененных файлов до любых правок исходников. Если working tree dirty, спросить, продолжать ли, stash или остановиться.
 
-- [ ] **Step 2: Locate hook business logic**
+- [ ] **Шаг 2: Найти бизнес-логику в hooks**
 
-Run:
+Выполнить:
 
 ```bash
 rg -n "use[A-Z].*(Catalog|catalog)|fetch|axios|query|mutation|useEffect|useMemo|columns|rows|filter|modal|sidePage" src/features/catalog src/pages/catalog
 ```
 
-Expected: all catalog hooks/components that currently own API calls, transforms, dependent filters, dynamic columns, modal/side page routing, validation, or submit behavior.
+Ожидаемо: все catalog hooks/components, которые сейчас владеют API calls, transforms, dependent filters, dynamic columns, modal/side page routing, validation или submit behavior.
 
-- [ ] **Step 3: Create migration inventory**
+- [ ] **Шаг 3: Создать инвентаризацию миграции**
 
-Write `docs/catalog-store-migration-inventory.md` with this table:
+Записать `docs/catalog-store-migration-inventory.md` с такой таблицей:
 
 ```md
-# Catalog Store Migration Inventory
+# Инвентаризация миграции Catalog на store
 
-| Current file | Logic found | Target owner | New file | Test |
+| Текущий файл | Найденная логика | Целевой владелец | Новый файл | Тест |
 | --- | --- | --- | --- | --- |
-| `src/features/catalog/hooks/useCatalogFilters.ts` | dependent filters | store action | `src/features/catalog/model/catalogGeneratedUiStore.ts` | `catalogGeneratedUiStore.test.ts` |
-| `src/features/catalog/hooks/useCatalogTable.ts` | table fetch and row mapping | table resolver | `src/features/catalog/model/table/getCatalogTableViewModel.ts` | `getCatalogTableViewModel.test.ts` |
-| `src/features/catalog/hooks/useCatalogColumns.ts` | dynamic columns | table mapper | `src/features/catalog/model/table/buildCatalogColumns.ts` | `buildCatalogColumns.test.ts` |
+| `src/features/catalog/hooks/useCatalogFilters.ts` | зависимые фильтры | store action | `src/features/catalog/model/catalogGeneratedUiStore.ts` | `catalogGeneratedUiStore.test.ts` |
+| `src/features/catalog/hooks/useCatalogTable.ts` | загрузка таблицы и mapping строк | table resolver | `src/features/catalog/model/table/getCatalogTableViewModel.ts` | `getCatalogTableViewModel.test.ts` |
+| `src/features/catalog/hooks/useCatalogColumns.ts` | динамические колонки | table mapper | `src/features/catalog/model/table/buildCatalogColumns.ts` | `buildCatalogColumns.test.ts` |
 ```
 
-Use only rows backed by files found in Step 2. Do not include empty inventory rows.
+Использовать только строки, подтвержденные файлами из Шага 2. Не добавлять пустые строки инвентаризации.
 
-- [ ] **Step 4: Approval gate**
+- [ ] **Шаг 4: Точка согласования**
 
-Stop after inventory and confirm that the mapping is correct before writing store code.
+Остановиться после инвентаризации и подтвердить, что mapping корректный, до написания кода store.
 
 ---
 
-## Task 2: Add Shared Generated UI Types And Table Types
+## Задача 2: Добавить shared типы Generated UI и таблиц
 
-**Files:**
+**Файлы:**
 
-- Create: `src/shared/generated-ui/store/generatedUi.types.ts`
-- Create: `src/shared/generated-ui/table/table.types.ts`
+- Создать: `src/shared/generated-ui/store/generatedUi.types.ts`
+- Создать: `src/shared/generated-ui/table/table.types.ts`
 
-- [ ] **Step 1: Add generated UI common types**
+- [ ] **Шаг 1: Добавить общие типы generated UI**
 
-Create `src/shared/generated-ui/store/generatedUi.types.ts`:
+Создать `src/shared/generated-ui/store/generatedUi.types.ts`:
 
 ```ts
 export type Option = {
@@ -241,9 +241,9 @@ export type GeneratedUiLoading = Record<string, boolean | undefined>;
 export type GeneratedUiErrors = Record<string, unknown>;
 ```
 
-- [ ] **Step 2: Add table view model types**
+- [ ] **Шаг 2: Добавить типы table view model**
 
-Create `src/shared/generated-ui/table/table.types.ts`:
+Создать `src/shared/generated-ui/table/table.types.ts`:
 
 ```ts
 export type CellType =
@@ -273,35 +273,35 @@ export type TableViewModel = {
 };
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [ ] **Шаг 3: Запустить typecheck**
 
-Run the project typecheck command from `package.json`.
+Выполнить команду typecheck проекта из `package.json`.
 
-Expected: PASS.
+Ожидаемо: команда проходит успешно.
 
 ---
 
-## Task 3: Create Catalog Store Skeleton With Testable Dependencies
+## Задача 3: Создать skeleton store для Catalog с тестируемыми зависимостями
 
-**Files:**
+**Файлы:**
 
-- Create: `src/features/catalog/model/catalogGeneratedUi.types.ts`
-- Create: `src/features/catalog/model/catalogGeneratedUiStore.ts`
-- Create: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
+- Создать: `src/features/catalog/model/catalogGeneratedUi.types.ts`
+- Создать: `src/features/catalog/model/catalogGeneratedUiStore.ts`
+- Создать: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
 
-- [ ] **Step 1: Write initial state test**
+- [ ] **Шаг 1: Написать тест initial state**
 
-Create a test that asserts:
+Создать тест, который проверяет:
 
-- `form.filters` starts with empty values;
-- `appliedFilters` is `null`;
-- `data.catalogTable` is `null`;
-- `loading` and `errors` are empty;
-- modals and side pages are closed.
+- `form.filters` начинается с пустых значений;
+- `appliedFilters` равен `null`;
+- `data.catalogTable` равен `null`;
+- `loading` и `errors` пустые;
+- modals и side pages закрыты.
 
-- [ ] **Step 2: Implement types**
+- [ ] **Шаг 2: Реализовать типы**
 
-Create `src/features/catalog/model/catalogGeneratedUi.types.ts`:
+Создать `src/features/catalog/model/catalogGeneratedUi.types.ts`:
 
 ```ts
 import type {
@@ -349,45 +349,45 @@ export type CatalogGeneratedUiDependencies = {
 };
 ```
 
-Adjust filter fields only after Task 1 inventory confirms actual catalog filters.
+Корректировать поля фильтров только после того, как инвентаризация из Задачи 1 подтвердит реальные catalog filters.
 
-- [ ] **Step 3: Implement store factory**
+- [ ] **Шаг 3: Реализовать store factory**
 
-Create `src/features/catalog/model/catalogGeneratedUiStore.ts` with `createCatalogGeneratedUiStore(dependencies)`, not a hard-coded singleton. This keeps tests independent and avoids direct API calls in store tests.
+Создать `src/features/catalog/model/catalogGeneratedUiStore.ts` с `createCatalogGeneratedUiStore(dependencies)`, а не hard-coded singleton. Это сохраняет тесты независимыми и исключает прямые API calls в store tests.
 
-- [ ] **Step 4: Run store test**
+- [ ] **Шаг 4: Запустить store test**
 
-Run:
+Выполнить:
 
 ```bash
 pnpm test src/features/catalog/model/catalogGeneratedUiStore.test.ts
 ```
 
-Expected: PASS, or use the repo's actual test command if not `pnpm test`.
+Ожидаемо: команда проходит успешно; если в репозитории используется не `pnpm test`, взять фактическую команду запуска тестов проекта.
 
 ---
 
-## Task 4: Move Dependent Filter Logic From Hooks Into Store Actions
+## Задача 4: Перенести логику dependent filters из hooks в store actions
 
-**Files:**
+**Файлы:**
 
-- Modify: `src/features/catalog/model/catalogGeneratedUi.types.ts`
-- Modify: `src/features/catalog/model/catalogGeneratedUiStore.ts`
-- Modify: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
-- Modify later: legacy hook files from Task 1 inventory
+- Изменить: `src/features/catalog/model/catalogGeneratedUi.types.ts`
+- Изменить: `src/features/catalog/model/catalogGeneratedUiStore.ts`
+- Изменить: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
+- Изменить позже: legacy hook files из инвентаризации Задачи 1
 
-- [ ] **Step 1: Write tests for parent filter changes**
+- [ ] **Шаг 1: Написать тесты для изменений родительского фильтра**
 
-Cover the actual dependency graph found in Task 1. Minimum assertions:
+Покрыть фактический dependency graph из Задачи 1. Минимальные проверки:
 
-- setting a parent filter resets downstream filter values;
-- downstream options are cleared immediately;
-- direct child options load after parent is selected;
-- clearing parent does not call child option loader.
+- установка родительского фильтра сбрасывает downstream значения фильтров;
+- downstream options очищаются сразу;
+- options прямого дочернего фильтра загружаются после выбора родителя;
+- очистка родителя не вызывает loader дочерних options.
 
-- [ ] **Step 2: Implement store actions**
+- [ ] **Шаг 2: Реализовать store actions**
 
-Add actions matching actual catalog filters. Example pattern:
+Добавить actions, соответствующие реальным catalog filters. Пример паттерна:
 
 ```ts
 setType: async (type) => {
@@ -415,55 +415,55 @@ setType: async (type) => {
 }
 ```
 
-- [ ] **Step 3: Delete duplicated hook logic**
+- [ ] **Шаг 3: Удалить дублирующуюся hook logic**
 
-For every hook in inventory:
+Для каждого hook из инвентаризации:
 
-- remove API calls for dependent options;
-- remove `useEffect` chains that reset child filters;
-- keep only selector/adaptor code while old components still import the hook.
+- удалить API calls для dependent options;
+- удалить цепочки `useEffect`, которые сбрасывают дочерние фильтры;
+- оставить только selector/adaptor code, пока старые components все еще импортируют hook.
 
-- [ ] **Step 4: Run tests**
+- [ ] **Шаг 4: Запустить тесты**
 
-Run store tests and typecheck.
+Запустить store tests и typecheck.
 
-Expected: PASS.
+Ожидаемо: команда проходит успешно.
 
 ---
 
-## Task 5: Move Table Fetching And Dynamic Columns Into Resolver
+## Задача 5: Перенести загрузку таблицы и dynamic columns в resolver
 
-**Files:**
+**Файлы:**
 
-- Create: `src/features/catalog/model/table/catalogTable.types.ts`
-- Create: `src/features/catalog/model/table/getCatalogTableViewModel.ts`
-- Create: `src/features/catalog/model/table/buildCatalogColumns.ts`
-- Create: `src/features/catalog/model/table/buildCatalogRows.ts`
-- Create: `src/features/catalog/model/table/getCatalogTableViewModel.test.ts`
-- Create: `src/features/catalog/model/table/buildCatalogColumns.test.ts`
-- Create: `src/features/catalog/model/table/buildCatalogRows.test.ts`
-- Modify: table-related hooks from Task 1 inventory
+- Создать: `src/features/catalog/model/table/catalogTable.types.ts`
+- Создать: `src/features/catalog/model/table/getCatalogTableViewModel.ts`
+- Создать: `src/features/catalog/model/table/buildCatalogColumns.ts`
+- Создать: `src/features/catalog/model/table/buildCatalogRows.ts`
+- Создать: `src/features/catalog/model/table/getCatalogTableViewModel.test.ts`
+- Создать: `src/features/catalog/model/table/buildCatalogColumns.test.ts`
+- Создать: `src/features/catalog/model/table/buildCatalogRows.test.ts`
+- Изменить: table-related hooks из инвентаризации Задачи 1
 
-- [ ] **Step 1: Write mapper tests**
+- [ ] **Шаг 1: Написать mapper tests**
 
-Tests must assert:
+Тесты должны проверять:
 
-- raw API fields map to app-level row fields;
-- dynamic columns appear only from documented meta/permissions;
-- missing optional raw fields produce stable empty values;
-- JSON never receives raw API response.
+- raw API fields мапятся в app-level row fields;
+- dynamic columns появляются только из документированных meta/permissions;
+- отсутствующие optional raw fields дают стабильные empty values;
+- JSON никогда не получает raw API response.
 
-- [ ] **Step 2: Implement `buildCatalogColumns`**
+- [ ] **Шаг 2: Реализовать `buildCatalogColumns`**
 
-Columns must return `TableColumn[]`, not JSX and not raw component config.
+Columns должны возвращать `TableColumn[]`, а не JSX и не raw component config.
 
-- [ ] **Step 3: Implement `buildCatalogRows`**
+- [ ] **Шаг 3: Реализовать `buildCatalogRows`**
 
-Rows must return `TableRow[]` with stable keys and app-level names.
+Rows должны возвращать `TableRow[]` со стабильными keys и app-level names.
 
-- [ ] **Step 4: Implement `getCatalogTableViewModel`**
+- [ ] **Шаг 4: Реализовать `getCatalogTableViewModel`**
 
-Resolver flow:
+Поток resolver:
 
 ```text
 filters
@@ -473,85 +473,85 @@ filters
   -> TableViewModel
 ```
 
-- [ ] **Step 5: Wire `loadCatalogTable` in store**
+- [ ] **Шаг 5: Подключить `loadCatalogTable` в store**
 
-`loadCatalogTable` must read `get().ui.appliedFilters`, not draft `form.filters`.
+`loadCatalogTable` должен читать `get().ui.appliedFilters`, а не черновой `form.filters`.
 
-- [ ] **Step 6: Remove table business logic from hooks**
+- [ ] **Шаг 6: Удалить table business logic из hooks**
 
-Hooks should no longer build columns, rows, or fetch table data.
+Hooks больше не должны строить columns, rows или загружать table data.
 
-- [ ] **Step 7: Run tests**
+- [ ] **Шаг 7: Запустить тесты**
 
-Run table tests, store tests, and typecheck.
+Запустить table tests, store tests и typecheck.
 
-Expected: PASS.
+Ожидаемо: команда проходит успешно.
 
 ---
 
-## Task 6: Move Modal, Side Page, And Submit Logic Into Store
+## Задача 6: Перенести modal, side page и submit logic в store
 
-**Files:**
+**Файлы:**
 
-- Modify: `src/features/catalog/model/catalogGeneratedUi.types.ts`
-- Modify: `src/features/catalog/model/catalogGeneratedUiStore.ts`
-- Modify: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
-- Modify: hooks/components from Task 1 inventory that own modal/side page state
+- Изменить: `src/features/catalog/model/catalogGeneratedUi.types.ts`
+- Изменить: `src/features/catalog/model/catalogGeneratedUiStore.ts`
+- Изменить: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
+- Изменить: hooks/components из инвентаризации Задачи 1, которые владеют modal/side page state
 
-- [ ] **Step 1: Write UI state tests**
+- [ ] **Шаг 1: Написать UI state tests**
 
-Cover:
+Покрыть:
 
-- `openModal(id)` stores the opened modal id;
-- `closeModal()` clears it;
-- `openSidePage(id)` stores the opened side page id;
-- `closeSidePage()` clears it;
-- submit success closes the surface and refreshes required data;
-- submit error keeps the surface open and writes an error channel.
+- `openModal(id)` сохраняет id открытой modal;
+- `closeModal()` очищает его;
+- `openSidePage(id)` сохраняет id открытой side page;
+- `closeSidePage()` очищает его;
+- submit success закрывает surface и обновляет нужные data;
+- submit error оставляет surface открытой и записывает error channel.
 
-- [ ] **Step 2: Implement UI actions**
+- [ ] **Шаг 2: Реализовать UI actions**
 
-Keep modal routing logic inside store actions. JSON should only bind `openedWhenEquals`, `onCloseAction`, and submit action names.
+Держать modal routing logic внутри store actions. JSON должен только связывать `openedWhenEquals`, `onCloseAction` и имена submit actions.
 
-- [ ] **Step 3: Move mutation logic**
+- [ ] **Шаг 3: Перенести mutation logic**
 
-For each mutation currently inside hooks:
+Для каждой mutation, которая сейчас находится внутри hooks:
 
 ```text
 hook mutation
   -> store submit action
   -> api facade
-  -> close modal or side page on success
-  -> refresh affected data
-  -> loading/errors in store
+  -> закрыть modal или side page при успехе
+  -> обновить затронутые data
+  -> loading/errors в store
 ```
 
-- [ ] **Step 4: Run tests**
+- [ ] **Шаг 4: Запустить тесты**
 
-Expected: PASS.
+Ожидаемо: команда проходит успешно.
 
 ---
 
-## Task 7: Add StateProvider Bridge And Action Registry
+## Задача 7: Добавить StateProvider bridge и action registry
 
-**Files:**
+**Файлы:**
 
-- Create: `src/shared/generated-ui/store/createGeneratedUiStateBridge.ts`
-- Create: `src/shared/generated-ui/renderer/actionRegistry.types.ts`
-- Create: `src/features/catalog/model/catalogGeneratedUi.actions.ts`
-- Modify or create: `src/pages/catalog/CatalogGeneratedPage.tsx`
+- Создать: `src/shared/generated-ui/store/createGeneratedUiStateBridge.ts`
+- Создать: `src/shared/generated-ui/renderer/actionRegistry.types.ts`
+- Создать: `src/features/catalog/model/catalogGeneratedUi.actions.ts`
+- Изменить или создать: `src/pages/catalog/CatalogGeneratedPage.tsx`
 
-- [ ] **Step 1: Create state bridge**
+- [ ] **Шаг 1: Создать state bridge**
 
-Bridge responsibilities:
+Ответственность bridge:
 
-- expose `state.ui` to `StateProvider`;
-- update only store-owned UI state;
-- avoid direct component access to Zustand internals.
+- отдавать `state.ui` в `StateProvider`;
+- обновлять только UI state, которым владеет store;
+- не давать components прямой доступ к Zustand internals.
 
-- [ ] **Step 2: Create action registry**
+- [ ] **Шаг 2: Создать action registry**
 
-Each JSON action id maps to one store action:
+Каждый JSON action id мапится на один store action:
 
 ```ts
 export function createCatalogGeneratedUiActions(store: CatalogGeneratedUiStoreApi) {
@@ -566,37 +566,37 @@ export function createCatalogGeneratedUiActions(store: CatalogGeneratedUiStoreAp
 }
 ```
 
-Use actual action names from `catalog.schema.json` after Task 9.
+Использовать реальные action names из `catalog.schema.json` после Задачи 9.
 
-- [ ] **Step 3: Wire page wrapper**
+- [ ] **Шаг 3: Подключить page wrapper**
 
-`CatalogGeneratedPage` responsibilities:
+Ответственность `CatalogGeneratedPage`:
 
-- create or import the catalog store;
-- call `store.getState().init()` once for screen init;
-- pass state bridge to `StateProvider`;
-- pass schema and registries to `GeneratedScreen`.
+- создать или импортировать catalog store;
+- один раз вызвать `store.getState().init()` для screen init;
+- передать state bridge в `StateProvider`;
+- передать schema и registries в `GeneratedScreen`.
 
-- [ ] **Step 4: Run smoke test**
+- [ ] **Шаг 4: Запустить smoke test**
 
-Expected:
+Ожидаемо:
 
-- page renders with initial loading state;
-- no component imports feature API directly;
-- no JSON action id is missing from registry.
+- page рендерится с initial loading state;
+- ни один component не импортирует feature API напрямую;
+- ни один JSON action id не отсутствует в registry.
 
 ---
 
-## Task 8: Convert Catalog JSON To Controlled Store Bindings
+## Задача 8: Перевести Catalog JSON на controlled store bindings
 
-**Files:**
+**Файлы:**
 
-- Modify or create: `src/pages/catalog/catalog.schema.json`
-- Modify: catalog component catalog docs, if present
+- Изменить или создать: `src/pages/catalog/catalog.schema.json`
+- Изменить: документацию catalog component catalog, если она есть
 
-- [ ] **Step 1: Replace inline logic with state bindings**
+- [ ] **Шаг 1: Заменить inline logic на state bindings**
 
-Allowed:
+Разрешено:
 
 ```json
 {
@@ -607,7 +607,7 @@ Allowed:
 }
 ```
 
-Blocked:
+Заблокировано:
 
 ```json
 {
@@ -617,9 +617,9 @@ Blocked:
 }
 ```
 
-- [ ] **Step 2: Bind table to view model only**
+- [ ] **Шаг 2: Привязать таблицу только к view model**
 
-Catalog table JSON must read:
+Catalog table JSON должен читать:
 
 ```json
 {
@@ -629,9 +629,9 @@ Catalog table JSON must read:
 }
 ```
 
-- [ ] **Step 3: Bind modal and side page open state**
+- [ ] **Шаг 3: Привязать open state modal и side page**
 
-JSON must read store state and call action ids:
+JSON должен читать store state и вызывать action ids:
 
 ```json
 {
@@ -643,24 +643,24 @@ JSON must read store state and call action ids:
 }
 ```
 
-- [ ] **Step 4: Validate registry coverage**
+- [ ] **Шаг 4: Проверить registry coverage**
 
-Run or manually apply `docs/prompt-packs/json-render/00-validate-catalog-coverage.md`.
+Выполнить или вручную применить `docs/prompt-packs/json-render/00-validate-catalog-coverage.md`.
 
-Expected: every component type, action id, state path, data source and resolver is documented and registered.
+Ожидаемо: каждый component type, action id, state path, data source и resolver задокументирован и зарегистрирован.
 
 ---
 
-## Task 9: Slim Or Remove Legacy Hooks
+## Задача 9: Упростить или удалить legacy hooks
 
-**Files:**
+**Файлы:**
 
-- Modify: `src/features/catalog/hooks/*.ts`
-- Modify: current consumers found in Task 1
+- Изменить: `src/features/catalog/hooks/*.ts`
+- Изменить: текущие consumers, найденные в Задаче 1
 
-- [ ] **Step 1: Replace hook internals**
+- [ ] **Шаг 1: Заменить internals hooks**
 
-Allowed hook after migration:
+Разрешенный hook после миграции:
 
 ```ts
 export function useCatalogFilters() {
@@ -676,7 +676,7 @@ export function useCatalogFilters() {
 }
 ```
 
-Not allowed:
+Не разрешено:
 
 ```ts
 export function useCatalogFilters() {
@@ -686,105 +686,105 @@ export function useCatalogFilters() {
 }
 ```
 
-- [ ] **Step 2: Remove unused hooks**
+- [ ] **Шаг 2: Удалить неиспользуемые hooks**
 
-After all consumers use store/selectors/generated page, delete hooks that only wrap removed logic.
+После того как все consumers используют store/selectors/generated page, удалить hooks, которые только оборачивают удаленную логику.
 
-- [ ] **Step 3: Search for leftovers**
+- [ ] **Шаг 3: Найти остатки старой логики**
 
-Run:
+Выполнить:
 
 ```bash
 rg -n "fetch|axios|useEffect|useMemo|columns|rows|reset.*filter|open.*Modal|open.*SidePage" src/features/catalog src/pages/catalog
 ```
 
-Expected: remaining matches are either presentation-only or explicitly justified.
+Ожидаемо: оставшиеся совпадения относятся только к presentation-only логике или явно обоснованы.
 
 ---
 
-## Task 10: End-To-End Verification
+## Задача 10: End-to-end проверка
 
-**Files:**
+**Файлы:**
 
-- Modify or create: `src/pages/catalog/CatalogGeneratedPage.test.tsx`
-- Modify or create: generated-ui runtime tests if the project has them
+- Изменить или создать: `src/pages/catalog/CatalogGeneratedPage.test.tsx`
+- Изменить или создать: generated-ui runtime tests, если они есть в проекте
 
-- [ ] **Step 1: Unit tests**
+- [ ] **Шаг 1: Unit tests**
 
-Run:
+Выполнить:
 
 ```bash
 pnpm test src/features/catalog/model
 ```
 
-Expected:
+Ожидаемо:
 
-- dependent filters pass;
-- table resolver pass;
-- modal/side page action tests pass;
-- submit action tests pass.
+- dependent filters проходят;
+- table resolver проходит;
+- modal/side page action tests проходят;
+- submit action tests проходят.
 
-- [ ] **Step 2: Typecheck**
+- [ ] **Шаг 2: Typecheck**
 
-Run:
+Выполнить:
 
 ```bash
 pnpm typecheck
 ```
 
-Expected: PASS.
+Ожидаемо: команда проходит успешно.
 
-- [ ] **Step 3: Lint**
+- [ ] **Шаг 3: Lint**
 
-Run:
+Выполнить:
 
 ```bash
 pnpm lint
 ```
 
-Expected: PASS.
+Ожидаемо: команда проходит успешно.
 
-- [ ] **Step 4: Runtime smoke**
+- [ ] **Шаг 4: Runtime smoke**
 
-Run the app using the project command from `package.json`, open the catalog page, and verify:
+Запустить приложение командой проекта из `package.json`, открыть catalog page и проверить:
 
-- initial filter options load on init;
-- changing a parent filter clears downstream filters and options;
-- table does not reload on every input change;
-- clicking apply loads table;
-- reset clears draft filters and table state according to spec;
-- modal/side page open and close from store state;
-- submit success closes surface and refreshes affected data;
-- submit error is visible and does not silently close the surface.
-
----
-
-## Migration Checklist
-
-- [ ] Every API call moved out of visual components and JSON.
-- [ ] Every old hook with business logic is either removed or reduced to a thin selector adapter.
-- [ ] Every dependent filter reset is tested in store tests.
-- [ ] Table rows and columns are built by TypeScript resolver/mappers.
-- [ ] JSON reads `/form`, `/data`, `/loading`, `/errors`, `/ui` state only.
-- [ ] JSON calls action names only, with no raw functions or inline business logic.
-- [ ] Component registry blocks unknown component types.
-- [ ] Action registry blocks unknown action ids.
-- [ ] Source adapters/resolvers hide XML/GraphQL/raw endpoint specifics from components.
-- [ ] Store tests can run without React rendering.
+- initial filter options загружаются на init;
+- изменение родительского фильтра очищает downstream filters и options;
+- таблица не перезагружается при каждом input change;
+- клик по apply загружает таблицу;
+- reset очищает draft filters и table state согласно spec;
+- modal/side page открываются и закрываются из store state;
+- submit success закрывает surface и обновляет затронутые data;
+- submit error видим и не закрывает surface молча.
 
 ---
 
-## Execution Order
+## Чеклист миграции
 
-1. Task 1 inventory and approval.
-2. Task 2 shared types.
-3. Task 3 store skeleton.
-4. Task 4 dependent filters.
-5. Task 5 table resolver and mappers.
-6. Task 6 modal, side page and submit actions.
-7. Task 7 StateProvider bridge and action registry.
-8. Task 8 JSON controlled bindings.
-9. Task 9 legacy hook cleanup.
-10. Task 10 verification.
+- [ ] Каждый API call вынесен из visual components и JSON.
+- [ ] Каждый старый hook с business logic либо удален, либо сведен к thin selector adapter.
+- [ ] Каждый reset зависимого фильтра покрыт store tests.
+- [ ] Table rows и columns строятся TypeScript resolver/mappers.
+- [ ] JSON читает только state `/form`, `/data`, `/loading`, `/errors`, `/ui`.
+- [ ] JSON вызывает только action names, без raw functions или inline business logic.
+- [ ] Component registry блокирует неизвестные component types.
+- [ ] Action registry блокирует неизвестные action ids.
+- [ ] Source adapters/resolvers скрывают XML/GraphQL/raw endpoint specifics от components.
+- [ ] Store tests могут выполняться без React rendering.
 
-Do not start implementation before the inventory confirms the actual catalog filters, actions, API contracts and UI states.
+---
+
+## Порядок выполнения
+
+1. Задача 1: инвентаризация и согласование.
+2. Задача 2: shared types.
+3. Задача 3: store skeleton.
+4. Задача 4: dependent filters.
+5. Задача 5: table resolver и mappers.
+6. Задача 6: modal, side page и submit actions.
+7. Задача 7: StateProvider bridge и action registry.
+8. Задача 8: JSON controlled bindings.
+9. Задача 9: cleanup legacy hooks.
+10. Задача 10: verification.
+
+Не начинать имплементацию до того, как инвентаризация подтвердит реальные catalog filters, actions, API contracts и UI states.
