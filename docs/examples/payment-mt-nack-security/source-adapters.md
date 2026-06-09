@@ -7,7 +7,7 @@ task/confo payload
         |
 source adapters / resolvers
         |
-app-level contract
+data contracts / app-level contract
         |
 json-render / React catalog components
 ```
@@ -18,6 +18,10 @@ UI components must consume normalized app-level props. They must not read raw `d
 
 Purpose: normalize task/confo payload values required by page actions and the trade side page.
 
+Implements contract:
+
+- `paymentMtNack.context`
+
 Sources:
 
 - `task-context`: host task payload.
@@ -25,7 +29,13 @@ Sources:
 
 Input params:
 
-| Param | Source path | Required | Notes |
+| Param | Source | Required | Notes |
+| --- | --- | --- | --- |
+| `taskHostContext` | screen input | yes | Host task/confo context passed to source adapter. |
+
+Source mappings:
+
+| Output field | Source path | Required | Notes |
 | --- | --- | --- | --- |
 | `taskId` | `data.task.id` | yes | Required to finish the task. |
 | `step` | `data.task.parameters.STEP` | yes | Used by validation error normalization. |
@@ -57,6 +67,10 @@ Used by:
 
 Purpose: normalize MT channel rejection and document validation payloads into a common validation error list.
 
+Implements contract:
+
+- `paymentMtNack.validationErrors`
+
 Sources:
 
 - `task-context`: task step.
@@ -64,7 +78,14 @@ Sources:
 
 Input params:
 
-| Param | Source path | Required | Notes |
+| Param | Source | Required | Notes |
+| --- | --- | --- | --- |
+| `context` | `paymentMtNack.context` | yes | Provides normalized task step. |
+| `taskHostContext` | screen input | yes | Host task/confo context passed to source adapter. |
+
+Source mappings:
+
+| Output field | Source path | Required | Notes |
 | --- | --- | --- | --- |
 | `step` | `data.task.parameters.STEP` | yes | Used to choose parsing rules. |
 | `rejectionReason` | `data.confo.params.MT_CHANNEL_REJECTION_REASON` | no | Channel-level rejection text. |
@@ -79,6 +100,8 @@ type ValidationError = {
   description?: string;
   source?: "channel" | "document" | "unknown";
 };
+
+type MtValidationErrors = ValidationError[];
 ```
 
 States:
@@ -94,6 +117,10 @@ Used by:
 ## Action Resolver: `finishPaymentMtNackSecurity`
 
 Purpose: submit the selected NACK decision to the task host.
+
+Implements contract:
+
+- `paymentMtNack.finish`
 
 Input params:
 

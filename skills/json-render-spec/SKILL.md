@@ -16,16 +16,31 @@ Create or review deterministic A2UI/json-render artifacts using project-owned co
 Require:
 
 1. Analyst spec with Given/When/Then scenarios.
-2. API contracts for every async store action, resolver, and business action.
-3. Design reference or designer-approved UI structure.
-4. Component catalog with allowed component types and props contracts.
-5. Source adapter/resolver contracts for transport-specific data such as XML APIs, GraphQL queries, or multiple backend endpoints.
-6. Action registry and payload contracts.
-7. Data contracts when schema references data.
+2. Data contracts for every screen input, app-level data object, async query dependency, resolver, and business action.
+3. API contracts for every async store action, resolver, and business action.
+4. Design reference or designer-approved UI structure.
+5. Component catalog with allowed component types and props contracts.
+6. Source adapter/resolver contracts for transport-specific data such as XML APIs, GraphQL queries, or multiple backend endpoints.
+7. Action registry and payload contracts.
 8. Rules format when schema uses conditions, visibility, disabled, or options logic.
 9. Registry/action/store adapter notes when available.
 
 If any required input is missing, block generation and ask for the smallest missing contract.
+
+## Data Contracts
+
+Before generating source adapters or screen schema, require app-level Data Contracts.
+
+Each screen data contract should define:
+
+- screen inputs and params;
+- normalized output model;
+- owner layer: store, query dependency, resolver, or component-owned adapter;
+- TanStack Query ownership for server-backed data: query key, enabled condition, loading/empty/error behavior, and invalidation/refetch triggers;
+- action/mutation payload, response, success behavior, error behavior, and invalidation/refetch behavior;
+- required normalizers, fixtures, and tests.
+
+Data Contracts may reference existing API hooks, TanStack Query dependencies, or source adapter ids, but they must not put raw `fetch`, raw URLs, `queryFn`, `useQuery`, or transport parsing into schema.
 
 ## Generation Rules
 
@@ -33,9 +48,10 @@ If any required input is missing, block generation and ask for the smallest miss
 - Do not create arbitrary HTML, CSS, JavaScript, inline functions, or unregistered component types.
 - Do not invent API endpoints, response fields, actions, states, permissions, filters, table columns, or validation rules.
 - Map every user action to an action id from the analyst spec or component catalog.
-- Map every data binding to a documented store state path, resolver output, or component prop contract.
+- Map every data binding to a Data Contract, documented store state path, resolver output, or component prop contract.
 - Keep XML, GraphQL, endpoint-specific field names, and response shapes inside source adapters or resolvers.
 - Components should receive normalized app-level props such as `tradeId`, not transport-specific paths from XML or GraphQL payloads.
+- Do not place raw XML/GraphQL/backend paths in UI component props or resolver params inside schema.
 - Keep complex behavior inside catalog components, store actions, action handlers, or adapters, not inside JSON.
 - Generate rules as declarative objects, never executable JS strings.
 - Generate normalizers only with fixture-based tests or an explicit artifact request for missing fixtures/tests.
@@ -49,35 +65,48 @@ If any required input is missing, block generation and ask for the smallest miss
 Use this boundary:
 
 ```text
-XML / GraphQL / multiple endpoints
+XML / GraphQL / REST / host context
         |
 source adapters / resolvers / mappers
         |
-app-level contract
+Data Contracts / app-level contract
         |
 A2UI schema / React components
 ```
 
-A2UI schema may reference a resolver by id and pass explicit params, but it should not encode transport parsing logic. The resolver owns mapping from source-specific fields to the normalized contract used by UI components.
+A2UI schema may reference a data contract or resolver by id and pass explicit app-level params, but it should not encode transport parsing logic. The source adapter/resolver owns mapping from source-specific fields to the normalized contract used by UI components.
 
 Example:
 
 ```json
 {
+  "inputs": {
+    "taskId": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "data": {
+    "nackContext": {
+      "contractId": "paymentMtNack.context",
+      "params": {
+        "taskId": "{{inputs.taskId}}"
+      }
+    },
+    "validationErrors": "{{resolvers.validationErrors}}"
+  },
   "resolvers": {
     "validationErrors": {
       "resolverId": "getMtValidationErrors",
       "params": {
-        "step": "{{data.task.parameters.STEP}}",
-        "rejectionReason": "{{data.confo.params.MT_CHANNEL_REJECTION_REASON}}",
-        "rejectionDocument": "{{data.confo.params.MT_DOCUMENT_VALIDATION_ERRORS}}"
+        "context": "{{data.nackContext}}"
       }
     }
   },
   "tree": {
     "type": "ValidationErrorsBlock",
     "props": {
-      "data": "{{resolvers.validationErrors}}"
+      "data": "{{data.validationErrors}}"
     }
   }
 }
@@ -122,6 +151,7 @@ Use this top-level shape unless the project defines a stricter one:
   },
   "inputs": {},
   "data": {},
+  "state": {},
   "resolvers": {},
   "actions": {},
   "rules": {},
@@ -144,7 +174,7 @@ Check:
 1. JSON is valid and uses the expected schema version.
 2. Every component type exists in registry.
 3. Every prop is allowed by the component contract.
-4. Every store binding and resolver reference has a state, API, or resolver contract.
+4. Every data reference, store binding, and resolver reference has a Data Contract, state contract, API contract, or resolver contract.
 5. Every action has a handler contract.
 6. Permissions/read-only/visibility behavior matches the analyst spec.
 7. Given/When/Then scenarios are covered by tree, actions, states, and adapters.
@@ -160,12 +190,12 @@ Block when:
 
 - a visible UI block has no catalog component;
 - an action has no behavior contract;
-- a store binding or resolver reference has no state, API, or resolver contract;
+- a data reference, store binding, or resolver reference has no Data Contract, state, API, or resolver contract;
 - a component depends directly on XML/GraphQL/source-specific payload fields instead of app-level props;
 - required UI state is absent from spec/catalog;
 - JSON requires a component prop not supported by its contract;
 - the spec and design conflict on user-visible behavior;
-- the generated JSON contains arbitrary runtime logic.
+- the generated JSON contains arbitrary runtime logic;
 - conditions require arbitrary JavaScript;
 - normalizers are generated without fixtures/tests and no artifact request is declared;
 - runtime depends on LLM to decide UI behavior.

@@ -169,7 +169,7 @@ store.data.table
   -> rows/columns/total/page/pageSize
 ```
 
-То есть `DataSource` допустим как **контракт в spec/schema**, но не как место, где JSON начинает сам владеть fetch/query/business logic.
+То есть в spec/schema допустима ссылка на **Data Contract** или **resolver id**, но не отдельный JSON-owned fetch/query слой.
 
 ---
 

@@ -22,25 +22,24 @@ export const paymentMtNackSecurityRegistry = {
 
 export const paymentMtNackSecurityResolvers = {
   getPaymentMtNackContext: async (params: {
-    taskId?: string;
-    step?: string;
-    tradeId?: string;
+    taskHostContext: unknown;
   }) => {
-    if (!params.taskId || !params.step || !params.tradeId) {
+    const context = normalizePaymentMtNackContext(params.taskHostContext);
+
+    if (!context.taskId || !context.step || !context.tradeId) {
       throw new Error("Payment MT NACK context is incomplete");
     }
 
-    return {
-      taskId: params.taskId,
-      step: params.step,
-      tradeId: params.tradeId,
-    };
+    return context;
   },
 
   getMtValidationErrors: async (params: {
-    step: string;
-    rejectionReason?: string;
-    rejectionDocument?: string;
+    context: {
+      taskId: string;
+      step: string;
+      tradeId: string;
+    };
+    taskHostContext: unknown;
   }) => {
     return normalizeMtValidationErrors(params);
   },
@@ -54,10 +53,21 @@ export const paymentMtNackSecurityResolvers = {
   },
 };
 
-function normalizeMtValidationErrors(_params: {
+function normalizePaymentMtNackContext(_taskHostContext: unknown): {
+  taskId: string;
   step: string;
-  rejectionReason?: string;
-  rejectionDocument?: string;
+  tradeId: string;
+} {
+  throw new Error("Implement in the project source adapter layer");
+}
+
+function normalizeMtValidationErrors(_params: {
+  context: {
+    taskId: string;
+    step: string;
+    tradeId: string;
+  };
+  taskHostContext: unknown;
 }) {
   throw new Error("Implement in the project adapter layer");
 }

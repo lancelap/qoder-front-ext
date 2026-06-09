@@ -38,6 +38,7 @@ Use this prompt to turn a task idea into a frontend-ready analyst specification.
    - отдельно happy path, empty, error, forbidden, validation, cancel/close flows.
 
 5. API contracts
+   API contracts are source/backend contracts. They become UI-safe only after Stage 2 Data Contracts.
    Для каждого API:
    - purpose;
    - method and path;
@@ -83,6 +84,7 @@ Use this prompt to turn a task idea into a frontend-ready analyst specification.
 11. Open questions
    - unresolved requirements;
    - missing API details;
+   - missing app-level data contract details;
    - missing states;
    - missing catalog components.
 
@@ -91,6 +93,7 @@ Use this prompt to turn a task idea into a frontend-ready analyst specification.
 - Если информации не хватает, добавь вопрос в Open questions.
 - Given/When/Then должен быть проверяемым тестом, а не пересказом задачи.
 - Если сложный UI-блок не покрыт каталогом компонентов, пометь его как proposed catalog component.
+- Не описывай raw API/XML/GraphQL fields как финальный UI contract; после spec нужен `json-render/00-define-data-contracts.md`.
 
 Вывод:
 - Готовый spec.md.

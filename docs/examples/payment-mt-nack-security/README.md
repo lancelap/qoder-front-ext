@@ -5,6 +5,7 @@ This example shows one pilot page built through the `json-render` workflow.
 Artifacts:
 
 - `spec.md` - analyst-facing behavior, API/action contracts, and Given/When/Then scenarios.
+- `data-contracts.md` - app-level screen data, resolver, action, query/cache, and test contracts.
 - `source-adapters.md` - resolver contracts that normalize confo/task payloads into app-level data.
 - `component-catalog.md` - page-specific catalog components used by the JSON screen.
 - `screen.render.json` - example `json-render` screen spec.
@@ -29,7 +30,7 @@ confo/task payload
         |
 source adapters / resolvers
         |
-app-level contract: tradeId, validationErrors, selectedDecision
+data contracts / app-level contract: nackContext, tradeId, validationErrors, selectedDecision
         |
 json-render / React catalog components
 ```

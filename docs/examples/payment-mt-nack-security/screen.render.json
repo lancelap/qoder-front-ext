@@ -5,6 +5,16 @@
     "title": "MT NACK Security",
     "route": "/tasks/payment-mt-nack-security"
   },
+  "inputs": {
+    "taskHostContext": {
+      "type": "host-context",
+      "required": true
+    }
+  },
+  "data": {
+    "nackContext": "{{resolvers.nackContext}}",
+    "validationErrors": "{{resolvers.validationErrors}}"
+  },
   "state": {
     "selectedDecision": null,
     "tradeSidePageOpen": false,
@@ -13,19 +23,18 @@
   },
   "resolvers": {
     "nackContext": {
+      "contractId": "paymentMtNack.context",
       "resolverId": "getPaymentMtNackContext",
       "params": {
-        "taskId": "{{data.task.id}}",
-        "step": "{{data.task.parameters.STEP}}",
-        "tradeId": "{{data.confo.params.TRADE_ID}}"
+        "taskHostContext": "{{inputs.taskHostContext}}"
       }
     },
     "validationErrors": {
+      "contractId": "paymentMtNack.validationErrors",
       "resolverId": "getMtValidationErrors",
       "params": {
-        "step": "{{resolvers.nackContext.step}}",
-        "rejectionReason": "{{data.confo.params.MT_CHANNEL_REJECTION_REASON}}",
-        "rejectionDocument": "{{data.confo.params.MT_DOCUMENT_VALIDATION_ERRORS}}"
+        "context": "{{data.nackContext}}",
+        "taskHostContext": "{{inputs.taskHostContext}}"
       }
     }
   },
@@ -45,17 +54,19 @@
       "value": false
     },
     "finishPaymentMtNackSecurity": {
-      "type": "resolver",
-      "resolverId": "finishPaymentMtNackSecurity",
+      "type": "action",
+      "actionId": "paymentMtNack.finish",
+      "handlerId": "finishPaymentMtNackSecurity",
       "params": {
-        "taskId": "{{resolvers.nackContext.taskId}}",
-        "tradeId": "{{resolvers.nackContext.tradeId}}",
+        "taskId": "{{data.nackContext.taskId}}",
+        "tradeId": "{{data.nackContext.tradeId}}",
         "decision": "{{state.selectedDecision}}"
       },
       "pendingState": "finishPending",
       "errorState": "finishError"
     }
   },
+  "rules": {},
   "tree": {
     "id": "paymentMtNackSecurity.page",
     "type": "PaymentMtNackSecurityPage",
@@ -67,11 +78,11 @@
         "id": "paymentMtNackSecurity.validationErrors",
         "type": "ValidationErrorsBlock",
         "props": {
-          "data": "{{resolvers.validationErrors}}",
+          "data": "{{data.validationErrors}}",
           "emptyText": "Ошибки валидации не найдены"
         },
         "metadata": {
-          "sourceSpec": "Data And API Contracts / Resolver: getMtValidationErrors",
+          "sourceSpec": "data-contracts.md / Data Contract: paymentMtNack.validationErrors",
           "scenarioIds": []
         }
       },
@@ -80,8 +91,8 @@
         "type": "TradeSidePageTrigger",
         "props": {
           "label": "Просмотр сделки",
-          "tradeId": "{{resolvers.nackContext.tradeId}}",
-          "disabled": "{{!resolvers.nackContext.tradeId}}",
+          "tradeId": "{{data.nackContext.tradeId}}",
+          "disabled": "{{!data.nackContext.tradeId}}",
           "sidePageId": "paymentMtNackSecurity.tradeSidePage"
         },
         "events": {
@@ -134,7 +145,7 @@
         "props": {
           "id": "paymentMtNackSecurity.tradeSidePage",
           "title": "Просмотр сделки",
-          "tradeId": "{{resolvers.nackContext.tradeId}}",
+          "tradeId": "{{data.nackContext.tradeId}}",
           "open": "{{state.tradeSidePageOpen}}"
         },
         "events": {
@@ -158,12 +169,12 @@
           "type": "FinishTaskButton",
           "props": {
             "label": "Закончить",
-            "disabled": "{{!state.selectedDecision || !resolvers.nackContext.taskId || !resolvers.nackContext.tradeId}}",
+            "disabled": "{{!state.selectedDecision || !data.nackContext.taskId || !data.nackContext.tradeId}}",
             "loading": "{{state.finishPending}}",
             "actionId": "finishPaymentMtNackSecurity",
             "params": {
-              "taskId": "{{resolvers.nackContext.taskId}}",
-              "tradeId": "{{resolvers.nackContext.tradeId}}",
+              "taskId": "{{data.nackContext.taskId}}",
+              "tradeId": "{{data.nackContext.tradeId}}",
               "decision": "{{state.selectedDecision}}"
             }
           },
@@ -187,12 +198,13 @@
   },
   "metadata": {
     "sourceSpec": "docs/examples/payment-mt-nack-security/spec.md",
+    "dataContracts": "docs/examples/payment-mt-nack-security/data-contracts.md",
     "sourceAdapters": "docs/examples/payment-mt-nack-security/source-adapters.md",
     "catalog": "docs/examples/payment-mt-nack-security/component-catalog.md",
     "generatedBy": "qoder",
     "notes": [
-      "UI components consume normalized nackContext and validationErrors.",
-      "Raw confo paths are only used as resolver input params."
+      "UI components consume normalized nackContext and validationErrors from data contracts.",
+      "Raw confo/task paths are only used inside source adapters."
     ]
   }
 }

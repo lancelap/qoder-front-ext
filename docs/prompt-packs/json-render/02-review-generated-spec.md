@@ -8,10 +8,10 @@ Use this prompt after A2UI/json-render schema or related LLM artifacts are gener
 Вход:
 - Analyst spec: <path-or-pasted-spec>
 - Component catalog: <path-or-pasted-catalog>
+- Data contracts: <path-or-pasted-data-contracts>
 - Source adapters/resolvers: <path-or-pasted-source-adapters|none>
 - Registry contract: <path-or-pasted-registry-contract>
 - Action registry: <path-or-pasted-action-registry|none>
-- Data contracts: <path-or-pasted-data-contracts|none>
 - Rules: <path-or-pasted-rules|none>
 - Normalizers: <path-or-pasted-normalizers|none>
 - Fixtures/tests: <path-or-pasted-tests|none>
@@ -20,18 +20,19 @@ Use this prompt after A2UI/json-render schema or related LLM artifacts are gener
 Проверь:
 1. JSON валиден.
 2. schemaVersion корректный.
-3. Все component types есть в registry.
-4. Все props разрешены props schema.
-5. Все store bindings, resolver references и async actions имеют state/API/resolver contracts.
-6. Все actions имеют handler contract.
-7. Given/When/Then scenarios покрыты tree/actions/states.
-8. Нет invented fields/states/actions/components.
-9. XML/GraphQL/source-specific mappings не протекают в UI components напрямую.
-10. Missing/opaque/proposed parts явно отмечены, если разрешены.
-11. Conditions/rules декларативные, без arbitrary JS.
-12. Normalizers имеют fixtures/tests или явный artifact request.
-13. Runtime не зависит от LLM для выбора UI.
-14. Schema reviewable: ids stable, names semantic, no duplicated hidden behavior.
+3. Top-level shape содержит canonical keys: schemaVersion, screen, inputs, data, state, resolvers, actions, rules, tree, metadata.
+4. Все component types есть в registry.
+5. Все props разрешены props schema.
+6. Все data references, store bindings, resolver references и async actions имеют Data Contract/state/API/resolver contract.
+7. Все actions имеют handler/action contract.
+8. Given/When/Then scenarios покрыты tree/actions/states/tests.
+9. Нет invented fields/states/actions/components.
+10. XML/GraphQL/source-specific mappings не протекают в UI components или resolver params напрямую.
+11. Missing/opaque/proposed parts явно отмечены, если разрешены.
+12. Conditions/rules декларативные, без arbitrary JS.
+13. Normalizers имеют fixtures/tests или явный artifact request.
+14. Runtime не зависит от LLM для выбора UI.
+15. Schema reviewable: ids stable, names semantic, no duplicated hidden behavior.
 
 Вывод:
 
@@ -45,6 +46,7 @@ Scenario coverage:
 | --- | --- | --- |
 
 Runtime readiness:
+- data contracts:
 - registry:
 - store adapter:
 - resolver/source adapter:

@@ -26,6 +26,8 @@ The user reviews an MT NACK security validation result, checks the related trade
 
 ## 4. Data And API Contracts
 
+These are source/backend contracts for analyst review. A2UI schema must consume app-level contracts from `data-contracts.md`, not raw paths from this section.
+
 ### Source Payloads
 
 The page receives task/confo payloads from the host runtime.
