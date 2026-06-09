@@ -4,11 +4,12 @@ Use this pack when converting a validated analyst spec, approved design, and com
 
 Recommended order:
 
-1. `00-design-source-adapters.md` when XML, GraphQL, multiple endpoints, or context payloads must be normalized.
-2. `00-validate-catalog-coverage.md`
-3. `01-generate-json-render-spec.md`
-4. `02-review-generated-spec.md`
-5. `03-generate-tests-from-gwt.md`
+1. `00-define-data-contracts.md` to turn analyst requirements into app-level screen data contracts.
+2. `00-design-source-adapters.md` when XML, GraphQL, multiple endpoints, or context payloads must be normalized.
+3. `00-validate-catalog-coverage.md`
+4. `01-generate-json-render-spec.md`
+5. `02-review-generated-spec.md`
+6. `03-generate-tests-from-gwt.md`
 
 Scope:
 
@@ -16,6 +17,7 @@ Scope:
 - target deterministic runtime rendering with a project registry;
 - do not require Vercel hosting or Vercel infrastructure;
 - generate structured artifacts such as screen schema, rules, normalizers, fixtures, tests, and docs, not arbitrary React code;
+- define app-level data contracts before generating source adapters or screen schema;
 - normalize XML, GraphQL, and endpoint-specific payloads through source adapters/resolvers;
 - complex UI behavior belongs in catalog components, store actions, action adapters, or source adapters.
 - LLM-generated artifacts must be validated before use and reviewed by a developer.
