@@ -1,15 +1,15 @@
 ---
 name: json-render-spec
-description: Use when converting validated analyst specs, approved designs, and component catalogs into json-render screen specs or reviewing json-render specs for catalog, API, action, state, and scenario coverage.
+description: Use when converting validated analyst specs, approved designs, and component catalogs into deterministic A2UI/json-render artifacts or reviewing schema, rules, normalizers, tests, catalog, API, action, state, and scenario coverage.
 ---
 
-# json-render Spec
+# A2UI / json-render Spec
 
 Use Russian by default.
 
 ## Purpose
 
-Create or review `json-render` screen specs for `@json-render/react` using project-owned component registries. This skill does not require Vercel infrastructure.
+Create or review deterministic A2UI/json-render artifacts using project-owned component, action, data contract, and rules registries. Treat json-render as a strict LLM contract, not as a universal UI runtime. LLM may generate schema, rules, normalizers, fixtures, tests, and docs for developer review; production runtime must remain deterministic.
 
 ## Inputs
 
@@ -20,7 +20,10 @@ Require:
 3. Design reference or designer-approved UI structure.
 4. Component catalog with allowed component types and props contracts.
 5. Source adapter/resolver contracts for transport-specific data such as XML APIs, GraphQL queries, or multiple backend endpoints.
-6. Registry/action/store adapter notes when available.
+6. Action registry and payload contracts.
+7. Data contracts when schema references data.
+8. Rules format when schema uses conditions, visibility, disabled, or options logic.
+9. Registry/action/store adapter notes when available.
 
 If any required input is missing, block generation and ask for the smallest missing contract.
 
@@ -34,6 +37,10 @@ If any required input is missing, block generation and ask for the smallest miss
 - Keep XML, GraphQL, endpoint-specific field names, and response shapes inside source adapters or resolvers.
 - Components should receive normalized app-level props such as `tradeId`, not transport-specific paths from XML or GraphQL payloads.
 - Keep complex behavior inside catalog components, store actions, action handlers, or adapters, not inside JSON.
+- Generate rules as declarative objects, never executable JS strings.
+- Generate normalizers only with fixture-based tests or an explicit artifact request for missing fixtures/tests.
+- Do not generate React components unless the user explicitly asks for a proposed component spec.
+- Do not generate runtime LLM calls.
 - If a complex UI block is missing from the catalog, request a separate component spec before generating the screen.
 - Prefer `blocked` over plausible but unsupported JSON.
 
@@ -48,10 +55,10 @@ source adapters / resolvers / mappers
         |
 app-level contract
         |
-json-render spec / React components
+A2UI schema / React components
 ```
 
-`screen.render.json` may call a resolver by id and pass explicit params, but it should not encode transport parsing logic. The resolver owns mapping from source-specific fields to the normalized contract used by UI components.
+A2UI schema may reference a resolver by id and pass explicit params, but it should not encode transport parsing logic. The resolver owns mapping from source-specific fields to the normalized contract used by UI components.
 
 Example:
 
@@ -78,6 +85,29 @@ Example:
 
 The resolver contract must define output shape. The component contract must consume that output shape, not the original XML/GraphQL payload.
 
+## LLM Artifact Contract
+
+Prefer structured artifacts over React code:
+
+- screen schema;
+- rules config;
+- normalizers;
+- fixtures;
+- unit tests and e2e-like test cases;
+- docs;
+- component requests when the catalog lacks a needed component.
+
+Generated artifacts must pass validation before runtime use:
+
+```text
+LLM output
+  -> schema/Zod validation
+  -> TypeScript checks
+  -> tests
+  -> developer review
+  -> deterministic runtime render
+```
+
 ## Output Shape
 
 Use this top-level shape unless the project defines a stricter one:
@@ -90,8 +120,11 @@ Use this top-level shape unless the project defines a stricter one:
     "title": "",
     "route": ""
   },
+  "inputs": {},
+  "data": {},
   "resolvers": {},
   "actions": {},
+  "rules": {},
   "tree": {},
   "metadata": {
     "sourceSpec": "",
@@ -117,7 +150,9 @@ Check:
 7. Given/When/Then scenarios are covered by tree, actions, states, and adapters.
 8. Missing states or opaque parts are explicit.
 9. Transport-specific mappings are isolated in source adapters/resolvers.
-10. There are no invented components, fields, actions, states, or hidden behavior.
+10. Rules and conditions are declarative and contain no executable JS.
+11. Normalizers have fixtures/tests or are explicit artifact requests.
+12. There are no invented components, fields, actions, states, or hidden behavior.
 
 ## Blocking Conditions
 
@@ -131,6 +166,9 @@ Block when:
 - JSON requires a component prop not supported by its contract;
 - the spec and design conflict on user-visible behavior;
 - the generated JSON contains arbitrary runtime logic.
+- conditions require arbitrary JavaScript;
+- normalizers are generated without fixtures/tests and no artifact request is declared;
+- runtime depends on LLM to decide UI behavior.
 
 ## Recommended Prompt Packs
 

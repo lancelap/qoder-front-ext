@@ -1,16 +1,21 @@
-# Review Generated json-render Spec
+# Review Generated A2UI / json-render Artifacts
 
-Use this prompt after `screen.render.json` is generated.
+Use this prompt after A2UI/json-render schema or related LLM artifacts are generated.
 
 ```text
-Ты ревьюишь screen.render.json перед runtime render.
+Ты ревьюишь A2UI/json-render schema, rules, normalizers и test artifacts перед runtime render.
 
 Вход:
 - Analyst spec: <path-or-pasted-spec>
 - Component catalog: <path-or-pasted-catalog>
 - Source adapters/resolvers: <path-or-pasted-source-adapters|none>
 - Registry contract: <path-or-pasted-registry-contract>
-- Generated screen.render.json: <path-or-pasted-json>
+- Action registry: <path-or-pasted-action-registry|none>
+- Data contracts: <path-or-pasted-data-contracts|none>
+- Rules: <path-or-pasted-rules|none>
+- Normalizers: <path-or-pasted-normalizers|none>
+- Fixtures/tests: <path-or-pasted-tests|none>
+- Generated A2UI schema: <path-or-pasted-schema>
 
 Проверь:
 1. JSON валиден.
@@ -23,17 +28,20 @@ Use this prompt after `screen.render.json` is generated.
 8. Нет invented fields/states/actions/components.
 9. XML/GraphQL/source-specific mappings не протекают в UI components напрямую.
 10. Missing/opaque/proposed parts явно отмечены, если разрешены.
-11. JSON reviewable: ids stable, names semantic, no duplicated hidden behavior.
+11. Conditions/rules декларативные, без arbitrary JS.
+12. Normalizers имеют fixtures/tests или явный artifact request.
+13. Runtime не зависит от LLM для выбора UI.
+14. Schema reviewable: ids stable, names semantic, no duplicated hidden behavior.
 
 Вывод:
 
 Verdict: ready | ready with risks | blocked
 
 Findings:
-- <severity>: <path in JSON> -> <problem> -> <fix>
+- <severity>: <path in artifact> -> <problem> -> <fix>
 
 Scenario coverage:
-| Scenario | Covered by JSON | Gaps |
+| Scenario | Covered by schema/rules/tests | Gaps |
 | --- | --- | --- |
 
 Runtime readiness:
@@ -41,6 +49,8 @@ Runtime readiness:
 - store adapter:
 - resolver/source adapter:
 - action adapter:
+- rules:
+- normalizers:
 - permissions:
 - tests:
 ```

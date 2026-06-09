@@ -1,790 +1,828 @@
-# План имплементации сторов для Generated UI в `catalog`
+# План A2UI/catalog, сторов и LLM-контрактов
 
-> **Для агентных исполнителей:** ОБЯЗАТЕЛЬНЫЙ ПОДНАВЫК: используйте `superpowers:subagent-driven-development` (рекомендуется) или `superpowers:executing-plans`, чтобы выполнять этот план по задачам. Шаги используют синтаксис чекбоксов (`- [ ]`) для отслеживания прогресса.
+> **Позиционирование:** A2UI/json render не должен быть универсальным UI-runtime, который пытается заменить React. Это строгий контракт между бизнес-описанием, данными, rules, UI-компонентами, тестами и LLM. Runtime должен оставаться детерминированным, а LLM должна генерировать проверяемые артефакты на этапе разработки.
 
-**Цель:** Перевести `catalog` на `json-render` в controlled mode: JSON описывает UI, а бизнес-логика из хуков переносится в TypeScript store, resolvers, mappers и слой API.
-
-**Архитектура:** `json-render` остается слоем рендера. `Zustand` store становится единым источником истины для `form`, `ui`, `data`, `loading`, `errors`, зависимых фильтров, табличных view models, состояния modal/side page и бизнес-действий. Старые React hooks должны стать тонкими adapters/selectors либо быть удалены после миграции потребителей.
-
-**Технологии:** React, TypeScript, `@json-render/react`, Zustand vanilla store, Vitest или текущий test runner проекта `catalog`, project-owned component registry/action registry.
+Сейчас отдельного `catalog` в проекте нет. Проект работает по старой схеме через `components/`, hooks и локальную бизнес-логику внутри React-слоя. Поэтому работа начинается не с `src/features/catalog`, а с выделения A2UI/catalog-слоя поверх существующих `components/`.
 
 ---
 
-## Область и допущения
+## Цель
 
-Текущий checkout `qoder-front-ext` содержит workflow-документацию и пример `Payment MT NACK Security`, но не содержит исходники целевого приложения `catalog`. Поэтому план фиксирует целевую структуру и порядок миграции. Перед исполнением в реальном `catalog` нужно выполнить Задачу 1 и заменить предложенные пути на фактические пути проекта, если они отличаются.
+Построить систему, где LLM не пишет хаотичный React-код, а генерирует структурированные артефакты:
 
-Ограничения из `QWEN.md`:
+- screen schema;
+- rules config;
+- normalizers;
+- fixtures;
+- test cases;
+- docs;
+- component requests, если нужного компонента нет в catalog.
 
-- не редактировать исходники до утверждения плана;
-- не создавать commits или pull requests в MVP;
-- не выдумывать backend behavior, endpoints, поля response или actions, которых нет в спецификации;
-- если working tree dirty, сначала показать измененные файлы и согласовать продолжение.
-
-Главное архитектурное правило:
+Дальше эти артефакты проходят:
 
 ```text
-JSON описывает UI.
-TypeScript владеет логикой.
+LLM output
+  -> schema/Zod validation
+  -> TypeScript checks
+  -> unit tests
+  -> developer review
+  -> deterministic runtime render
 ```
+
+В production runtime не должен каждый раз спрашивать LLM, что показать пользователю. LLM помогает сгенерировать schema/rules/tests на этапе разработки, schema коммитится в git, runtime работает предсказуемо.
 
 ---
 
-## Целевая структура файлов
-
-### Shared runtime для `generated-ui`
-
-- Создать: `src/shared/generated-ui/store/generatedUi.types.ts`
-  - Общие типы `Option`, `DateRange`, `GeneratedUiLoading`, `GeneratedUiErrors`.
-- Создать: `src/shared/generated-ui/store/createGeneratedUiStateBridge.ts`
-  - Adapter между feature store и `StateProvider`.
-- Создать: `src/shared/generated-ui/renderer/GeneratedScreen.tsx`
-  - Runtime renderer, который принимает schema, component registry, action registry и state bridge.
-- Создать: `src/shared/generated-ui/renderer/componentRegistry.ts`
-  - Base registry для разрешенных layout/control components, если в проекте еще нет такого registry.
-- Создать: `src/shared/generated-ui/renderer/actionRegistry.types.ts`
-  - Типизированный контракт action registry.
-- Создать: `src/shared/generated-ui/table/table.types.ts`
-  - `CellType`, `TableColumn`, `TableRow`, `TableViewModel`.
-- Создать: `src/shared/generated-ui/table/getValueByAccessor.ts`
-  - Доступ к значениям строк по `accessor`, без бизнес-логики.
-- Создать: `src/shared/generated-ui/table/cellRenderers.tsx`
-  - Отображение `text`, `amount`, `date`, `status`, `badge`, `link`, `errorList`.
-- Создать или изменить: `src/shared/generated-ui/table/TableRenderer.tsx`
-  - Табличный catalog component, который получает готовые `columns` и `rows`.
-
-### Feature `catalog`
-
-- Создать: `src/features/catalog/model/catalogGeneratedUiStore.ts`
-  - Zustand vanilla store для screen state и actions.
-- Создать: `src/features/catalog/model/catalogGeneratedUi.types.ts`
-  - Типы состояния `CatalogGeneratedUiState`, `CatalogFilters`, actions, store dependencies.
-- Создать: `src/features/catalog/model/catalogGeneratedUi.actions.ts`
-  - Action registry, который вызывает методы store по именам из JSON.
-- Создать: `src/features/catalog/model/catalogGeneratedUi.selectors.ts`
-  - Селекторы для старых React consumers и тестов.
-- Создать: `src/features/catalog/model/filters/catalogFilter.types.ts`
-  - Типы фильтров catalog.
-- Создать: `src/features/catalog/model/filters/mapCatalogFilterOptions.ts`
-  - Mapping raw API options в `Option`.
-- Создать: `src/features/catalog/model/table/catalogTable.types.ts`
-  - Raw/view model типы строк catalog table.
-- Создать: `src/features/catalog/model/table/getCatalogTableViewModel.ts`
-  - Resolver, который вызывает API и возвращает `TableViewModel`.
-- Создать: `src/features/catalog/model/table/buildCatalogColumns.ts`
-  - Динамические колонки на основе meta/permissions/spec.
-- Создать: `src/features/catalog/model/table/buildCatalogRows.ts`
-  - Mapping raw API rows в normalized rows.
-- Изменить или создать: `src/features/catalog/api/catalogApi.ts`
-  - API facade, если текущие хуки ходят в API напрямую.
-- Изменить: `src/features/catalog/hooks/*.ts`
-  - Удалить бизнес-логику из хуков. Оставить thin adapters только если есть legacy consumers.
-- Создать или изменить: `src/pages/catalog/catalog.schema.json`
-  - JSON bindings к store state и action names.
-- Создать или изменить: `src/pages/catalog/CatalogGeneratedPage.tsx`
-  - Page wrapper, который вызывает `store.init()` и подключает `StateProvider`.
-
-### Тесты
-
-- Создать: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
-- Создать: `src/features/catalog/model/table/getCatalogTableViewModel.test.ts`
-- Создать: `src/features/catalog/model/table/buildCatalogColumns.test.ts`
-- Создать: `src/features/catalog/model/table/buildCatalogRows.test.ts`
-- Создать или изменить: `src/pages/catalog/CatalogGeneratedPage.test.tsx`
-
----
-
-## Контракт store
-
-Целевая форма state:
-
-```ts
-export type CatalogGeneratedUiState = {
-  form: {
-    filters: CatalogFilters;
-  };
-  appliedFilters: CatalogFilters | null;
-  ui: {
-    openedModal: null | string;
-    openedSidePage: null | string;
-  };
-  data: {
-    catalogTable: TableViewModel | null;
-    [dataKey: string]: unknown;
-  };
-  loading: Record<string, boolean | undefined>;
-  errors: Record<string, unknown>;
-};
-```
-
-Целевая форма store:
-
-```ts
-export type CatalogGeneratedUiStore = {
-  ui: CatalogGeneratedUiState;
-  init: () => Promise<void>;
-  applyFilters: () => Promise<void>;
-  resetFilters: () => void;
-  loadCatalogTable: () => Promise<void>;
-  openModal: (modalId: string) => void;
-  closeModal: () => void;
-  openSidePage: (sidePageId: string) => void;
-  closeSidePage: () => void;
-};
-```
-
-Фильтры добавляются явно после инвентаризации. Для каждого зависимого фильтра нужен action вида:
-
-```ts
-setParentFilter: (value: Option | null) => Promise<void>;
-setChildFilter: (value: Option | null) => Promise<void>;
-```
-
-Правило для зависимых фильтров:
+## Ключевая граница
 
 ```text
-изменение родительского фильтра
-  -> записать значение родителя
-  -> сбросить downstream значения формы
-  -> очистить downstream options
-  -> загрузить options прямого дочернего фильтра
+spec / screenshot / аналитическое описание
+  -> LLM
+  -> A2UI schema + rules + normalizers + fixtures + tests
+  -> validation
+  -> developer review
+  -> runtime render
 ```
 
-Правило для таблицы:
+Runtime-граница:
 
 ```text
-изменение input не перезагружает таблицу
-applyFilters копирует form.filters в appliedFilters
-loadCatalogTable читает только appliedFilters
+A2UI schema
+  -> renderNode
+  -> component registry из текущих components/
+  -> Zustand screen store
+  -> actions/resolvers/use-cases
+  -> TanStack Query queryClient
+  -> API layer
 ```
 
 ---
 
-## Задача 1: Инвентаризировать существующие catalog hooks
+## Почему это нужно
 
-**Файлы:**
+LLM плохо работает, когда контекст размазан:
 
-- Прочитать: `src/features/catalog/hooks/*.ts`
-- Прочитать: `src/features/catalog/**/*.tsx`
-- Прочитать: `src/pages/catalog/**/*`
-- Прочитать: текущий API layer, который используют catalog hooks
-- Создать: `docs/catalog-store-migration-inventory.md`
-
-- [ ] **Шаг 1: Проверить состояние репозитория**
-
-Выполнить:
-
-```bash
-git status --short --branch
+```text
+component делает fetch
+component парсит XML
+component вычисляет rules
+component открывает modal
+component обновляет task
+component инвалидирует query
+component строит columns/rows
 ```
 
-Ожидаемо: список измененных файлов до любых правок исходников. Если working tree dirty, спросить, продолжать ли, stash или остановиться.
+LLM работает заметно лучше, когда есть компактный контракт:
 
-- [ ] **Шаг 2: Найти бизнес-логику в hooks**
-
-Выполнить:
-
-```bash
-rg -n "use[A-Z].*(Catalog|catalog)|fetch|axios|query|mutation|useEffect|useMemo|columns|rows|filter|modal|sidePage" src/features/catalog src/pages/catalog
+```text
+available components
+available actions
+available data contracts
+rules format
+schema format
+normalizer examples
+fixtures
+tests
+validators
 ```
 
-Ожидаемо: все catalog hooks/components, которые сейчас владеют API calls, transforms, dependent filters, dynamic columns, modal/side page routing, validation или submit behavior.
-
-- [ ] **Шаг 3: Создать инвентаризацию миграции**
-
-Записать `docs/catalog-store-migration-inventory.md` с такой таблицей:
-
-```md
-# Инвентаризация миграции Catalog на store
-
-| Текущий файл | Найденная логика | Целевой владелец | Новый файл | Тест |
-| --- | --- | --- | --- | --- |
-| `src/features/catalog/hooks/useCatalogFilters.ts` | зависимые фильтры | store action | `src/features/catalog/model/catalogGeneratedUiStore.ts` | `catalogGeneratedUiStore.test.ts` |
-| `src/features/catalog/hooks/useCatalogTable.ts` | загрузка таблицы и mapping строк | table resolver | `src/features/catalog/model/table/getCatalogTableViewModel.ts` | `getCatalogTableViewModel.test.ts` |
-| `src/features/catalog/hooks/useCatalogColumns.ts` | динамические колонки | table mapper | `src/features/catalog/model/table/buildCatalogColumns.ts` | `buildCatalogColumns.test.ts` |
-```
-
-Использовать только строки, подтвержденные файлами из Шага 2. Не добавлять пустые строки инвентаризации.
-
-- [ ] **Шаг 4: Точка согласования**
-
-Остановиться после инвентаризации и подтвердить, что mapping корректный, до написания кода store.
+Поэтому задача не “сделать магический UI”, а создать ограниченный declarative layer, который LLM может безопасно заполнять.
 
 ---
 
-## Задача 2: Добавить shared типы Generated UI и таблиц
+## Что входит в A2UI-контракт
 
-**Файлы:**
+MVP-слои:
 
-- Создать: `src/shared/generated-ui/store/generatedUi.types.ts`
-- Создать: `src/shared/generated-ui/table/table.types.ts`
+- `Layout Schema` - дерево UI-компонентов и bindings;
+- `Component Registry` - allowlist существующих компонентов;
+- `Action Registry` - allowlist действий;
+- `Data Contracts` - какие данные нужны экрану и кто их поставляет;
+- `Normalizers` - mapping XML/GraphQL/REST/raw API в app-level models;
+- `Rules` - декларативные условия видимости/disabled/options/actions;
+- `Validation` - Zod/JSON Schema validation generated artifacts;
+- `Tests` - unit/e2e-like сценарии из Given/When/Then.
 
-- [ ] **Шаг 1: Добавить общие типы generated UI**
+Важно: **не добавлять произвольный JavaScript в config**.
 
-Создать `src/shared/generated-ui/store/generatedUi.types.ts`:
+Плохо:
 
-```ts
-export type Option = {
-  label: string;
-  value: string;
-  disabled?: boolean;
-  [key: string]: unknown;
-};
-
-export type DateRange = {
-  from: string | null;
-  to: string | null;
-};
-
-export type GeneratedUiLoading = Record<string, boolean | undefined>;
-
-export type GeneratedUiErrors = Record<string, unknown>;
+```json
+{
+  "visibleWhen": "return task.type === 'CASH' && user.role === 'ADMIN'"
+}
 ```
 
-- [ ] **Шаг 2: Добавить типы table view model**
+Хорошо:
 
-Создать `src/shared/generated-ui/table/table.types.ts`:
-
-```ts
-export type CellType =
-  | "text"
-  | "amount"
-  | "date"
-  | "status"
-  | "badge"
-  | "link"
-  | "errorList";
-
-export type TableColumn = {
-  id: string;
-  title: string;
-  accessor: string;
-  cellType?: CellType;
-  sortable?: boolean;
-  width?: number;
-  align?: "left" | "right" | "center";
-};
-
-export type TableRow = Record<string, unknown>;
-
-export type TableViewModel = {
-  columns: TableColumn[];
-  rows: TableRow[];
-};
-```
-
-- [ ] **Шаг 3: Запустить typecheck**
-
-Выполнить команду typecheck проекта из `package.json`.
-
-Ожидаемо: команда проходит успешно.
-
----
-
-## Задача 3: Создать skeleton store для Catalog с тестируемыми зависимостями
-
-**Файлы:**
-
-- Создать: `src/features/catalog/model/catalogGeneratedUi.types.ts`
-- Создать: `src/features/catalog/model/catalogGeneratedUiStore.ts`
-- Создать: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
-
-- [ ] **Шаг 1: Написать тест initial state**
-
-Создать тест, который проверяет:
-
-- `form.filters` начинается с пустых значений;
-- `appliedFilters` равен `null`;
-- `data.catalogTable` равен `null`;
-- `loading` и `errors` пустые;
-- modals и side pages закрыты.
-
-- [ ] **Шаг 2: Реализовать типы**
-
-Создать `src/features/catalog/model/catalogGeneratedUi.types.ts`:
-
-```ts
-import type {
-  DateRange,
-  GeneratedUiErrors,
-  GeneratedUiLoading,
-  Option,
-} from "@/shared/generated-ui/store/generatedUi.types";
-import type { TableViewModel } from "@/shared/generated-ui/table/table.types";
-
-export type CatalogFilters = {
-  search: string;
-  type: Option | null;
-  status: Option | null;
-  owner: Option | null;
-  dateRange: DateRange | null;
-};
-
-export type CatalogGeneratedUiState = {
-  form: {
-    filters: CatalogFilters;
-  };
-  appliedFilters: CatalogFilters | null;
-  ui: {
-    openedModal: null | string;
-    openedSidePage: null | string;
-  };
-  data: {
-    typeOptions: Option[];
-    statusOptions: Option[];
-    ownerOptions: Option[];
-    catalogTable: TableViewModel | null;
-  };
-  loading: GeneratedUiLoading;
-  errors: GeneratedUiErrors;
-};
-
-export type CatalogGeneratedUiDependencies = {
-  loadTypeOptions: () => Promise<Option[]>;
-  loadStatusOptions: () => Promise<Option[]>;
-  loadOwnerOptions: (input: { type?: string }) => Promise<Option[]>;
-  getCatalogTableViewModel: (input: {
-    filters: CatalogFilters;
-  }) => Promise<TableViewModel>;
-};
-```
-
-Корректировать поля фильтров только после того, как инвентаризация из Задачи 1 подтвердит реальные catalog filters.
-
-- [ ] **Шаг 3: Реализовать store factory**
-
-Создать `src/features/catalog/model/catalogGeneratedUiStore.ts` с `createCatalogGeneratedUiStore(dependencies)`, а не hard-coded singleton. Это сохраняет тесты независимыми и исключает прямые API calls в store tests.
-
-- [ ] **Шаг 4: Запустить store test**
-
-Выполнить:
-
-```bash
-pnpm test src/features/catalog/model/catalogGeneratedUiStore.test.ts
-```
-
-Ожидаемо: команда проходит успешно; если в репозитории используется не `pnpm test`, взять фактическую команду запуска тестов проекта.
-
----
-
-## Задача 4: Перенести логику dependent filters из hooks в store actions
-
-**Файлы:**
-
-- Изменить: `src/features/catalog/model/catalogGeneratedUi.types.ts`
-- Изменить: `src/features/catalog/model/catalogGeneratedUiStore.ts`
-- Изменить: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
-- Изменить позже: legacy hook files из инвентаризации Задачи 1
-
-- [ ] **Шаг 1: Написать тесты для изменений родительского фильтра**
-
-Покрыть фактический dependency graph из Задачи 1. Минимальные проверки:
-
-- установка родительского фильтра сбрасывает downstream значения фильтров;
-- downstream options очищаются сразу;
-- options прямого дочернего фильтра загружаются после выбора родителя;
-- очистка родителя не вызывает loader дочерних options.
-
-- [ ] **Шаг 2: Реализовать store actions**
-
-Добавить actions, соответствующие реальным catalog filters. Пример паттерна:
-
-```ts
-setType: async (type) => {
-  set((state) => ({
-    ui: {
-      ...state.ui,
-      form: {
-        ...state.ui.form,
-        filters: {
-          ...state.ui.form.filters,
-          type,
-          owner: null,
-        },
-      },
-      data: {
-        ...state.ui.data,
-        ownerOptions: [],
-      },
-    },
-  }));
-
-  if (type) {
-    await get().loadOwnerOptions();
+```json
+{
+  "visibleWhen": {
+    "all": [
+      { "field": "$data.task.transferType", "equals": "CASH" },
+      { "field": "$user.role", "equals": "ADMIN" }
+    ]
   }
 }
 ```
 
-- [ ] **Шаг 3: Удалить дублирующуюся hook logic**
-
-Для каждого hook из инвентаризации:
-
-- удалить API calls для dependent options;
-- удалить цепочки `useEffect`, которые сбрасывают дочерние фильтры;
-- оставить только selector/adaptor code, пока старые components все еще импортируют hook.
-
-- [ ] **Шаг 4: Запустить тесты**
-
-Запустить store tests и typecheck.
-
-Ожидаемо: команда проходит успешно.
-
 ---
 
-## Задача 5: Перенести загрузку таблицы и dynamic columns в resolver
+## TanStack Query, store и Data Contracts
 
-**Файлы:**
+От TanStack Query не отказываемся.
 
-- Создать: `src/features/catalog/model/table/catalogTable.types.ts`
-- Создать: `src/features/catalog/model/table/getCatalogTableViewModel.ts`
-- Создать: `src/features/catalog/model/table/buildCatalogColumns.ts`
-- Создать: `src/features/catalog/model/table/buildCatalogRows.ts`
-- Создать: `src/features/catalog/model/table/getCatalogTableViewModel.test.ts`
-- Создать: `src/features/catalog/model/table/buildCatalogColumns.test.ts`
-- Создать: `src/features/catalog/model/table/buildCatalogRows.test.ts`
-- Изменить: table-related hooks из инвентаризации Задачи 1
+TanStack Query отвечает за server-state:
 
-- [ ] **Шаг 1: Написать mapper tests**
+- query keys;
+- cache;
+- dedupe;
+- stale/refetch behavior;
+- placeholderData;
+- invalidation после mutations.
 
-Тесты должны проверять:
+Zustand screen store отвечает за screen-state:
 
-- raw API fields мапятся в app-level row fields;
-- dynamic columns появляются только из документированных meta/permissions;
-- отсутствующие optional raw fields дают стабильные empty values;
-- JSON никогда не получает raw API response.
+- form/draft state;
+- applied filters;
+- pagination/sort state;
+- modal/side page state;
+- selected action/radio state;
+- loading/errors для A2UI;
+- готовые UI view models.
 
-- [ ] **Шаг 2: Реализовать `buildCatalogColumns`**
+A2UI schema не должна содержать raw `fetch`, raw URL, `useQuery`, query lifecycle или произвольный JS. Но schema/spec может ссылаться на **Data Contract** или **resolver id**, который реализован в TypeScript.
 
-Columns должны возвращать `TableColumn[]`, а не JSX и не raw component config.
-
-- [ ] **Шаг 3: Реализовать `buildCatalogRows`**
-
-Rows должны возвращать `TableRow[]` со стабильными keys и app-level names.
-
-- [ ] **Шаг 4: Реализовать `getCatalogTableViewModel`**
-
-Поток resolver:
+Правильная граница:
 
 ```text
-filters
-  -> api.getCatalogItems(normalized params)
-  -> buildCatalogColumns(response.meta)
-  -> buildCatalogRows(response.items)
-  -> TableViewModel
+Table UI
+  -> onPageChange action
+Zustand store
+  -> setPagination
+  -> loadTable
+resolver/dependency
+  -> queryClient.ensureQueryData
+  -> API request
+  -> normalize response
+store.data.table
+  -> rows/columns/total/page/pageSize
 ```
 
-- [ ] **Шаг 5: Подключить `loadCatalogTable` в store**
-
-`loadCatalogTable` должен читать `get().ui.appliedFilters`, а не черновой `form.filters`.
-
-- [ ] **Шаг 6: Удалить table business logic из hooks**
-
-Hooks больше не должны строить columns, rows или загружать table data.
-
-- [ ] **Шаг 7: Запустить тесты**
-
-Запустить table tests, store tests и typecheck.
-
-Ожидаемо: команда проходит успешно.
+То есть `DataSource` допустим как **контракт в spec/schema**, но не как место, где JSON начинает сам владеть fetch/query/business logic.
 
 ---
 
-## Задача 6: Перенести modal, side page и submit logic в store
+## Целевая структура проекта
 
-**Файлы:**
-
-- Изменить: `src/features/catalog/model/catalogGeneratedUi.types.ts`
-- Изменить: `src/features/catalog/model/catalogGeneratedUiStore.ts`
-- Изменить: `src/features/catalog/model/catalogGeneratedUiStore.test.ts`
-- Изменить: hooks/components из инвентаризации Задачи 1, которые владеют modal/side page state
-
-- [ ] **Шаг 1: Написать UI state tests**
-
-Покрыть:
-
-- `openModal(id)` сохраняет id открытой modal;
-- `closeModal()` очищает его;
-- `openSidePage(id)` сохраняет id открытой side page;
-- `closeSidePage()` очищает его;
-- submit success закрывает surface и обновляет нужные data;
-- submit error оставляет surface открытой и записывает error channel.
-
-- [ ] **Шаг 2: Реализовать UI actions**
-
-Держать modal routing logic внутри store actions. JSON должен только связывать `openedWhenEquals`, `onCloseAction` и имена submit actions.
-
-- [ ] **Шаг 3: Перенести mutation logic**
-
-Для каждой mutation, которая сейчас находится внутри hooks:
+Пути адаптировать под реальный проект после inventory. Базовый вариант:
 
 ```text
-hook mutation
-  -> store submit action
-  -> api facade
-  -> закрыть modal или side page при успехе
-  -> обновить затронутые data
-  -> loading/errors в store
+src/
+  components/
+    ...текущие UI components...
+
+  a2ui/
+    core/
+      renderNode.tsx
+      resolveBinding.ts
+      resolveCondition.ts
+      executeAction.ts
+
+    schema/
+      screen.schema.ts
+      component.schema.ts
+      action.schema.ts
+      data-contract.schema.ts
+      rules.schema.ts
+
+    registry/
+      componentRegistry.ts
+      actionRegistry.ts
+      dataContractRegistry.ts
+
+    catalog/
+      component-catalog.md
+      action-catalog.md
+      data-contracts.md
+
+    store/
+      createA2UIStateBridge.ts
+      a2ui.types.ts
+
+    table/
+      TableRenderer.tsx
+      table.types.ts
+      getValueByAccessor.ts
+      cellRenderers.tsx
+
+    llm/
+      prompts/
+        generate-screen.prompt.md
+        generate-rules.prompt.md
+        generate-normalizer.prompt.md
+        generate-tests.prompt.md
+      examples/
+        task-card.example.ts
+        table-with-pagination.example.ts
+        radio-with-modal.example.ts
+      validators/
+        validateGeneratedSchema.ts
+        validateGeneratedRules.ts
+        validateGeneratedTests.ts
+
+  entities/
+    task/
+      api/
+      model/
+      rules/
+      normalizers/
+      fixtures/
+
+  screens/
+    task-details/
+      taskDetails.schema.ts
+      TaskDetailsGeneratedPage.tsx
+
+      spec/
+        spec.md
+        data-contracts.md
+        catalog-coverage.md
+        test-plan.md
+
+      model/
+        taskDetailsStore.ts
+        taskDetails.types.ts
+        taskDetails.actions.ts
+        taskDetails.selectors.ts
+
+        queries/
+          taskDetailsQueryKeys.ts
+          taskDetailsDependencies.ts
+
+        rules/
+          taskDetailsRules.ts
+          resolveTaskDetailsRules.ts
+
+        normalizers/
+          normalizeTaskFromXml.ts
+          normalizeTaskFromGraphql.ts
+
+        fixtures/
+          taskDetails.fixture.ts
+
+      __tests__/
+        taskDetailsStore.test.ts
+        taskDetailsRules.test.ts
+        normalizeTaskFromXml.test.ts
+        taskDetails.schema.test.ts
 ```
 
-- [ ] **Шаг 4: Запустить тесты**
-
-Ожидаемо: команда проходит успешно.
+Если в реальном проекте нет `entities/`, не вводить его насильно. Можно держать `rules/normalizers/fixtures` внутри `screens/<screen>/model/`, пока не появится повторное использование.
 
 ---
 
-## Задача 7: Добавить StateProvider bridge и action registry
+## Stage 0: Inventory текущего `components/` и hooks
 
-**Файлы:**
+**Цель:** понять, что уже есть и где размазана бизнес-логика.
 
-- Создать: `src/shared/generated-ui/store/createGeneratedUiStateBridge.ts`
-- Создать: `src/shared/generated-ui/renderer/actionRegistry.types.ts`
-- Создать: `src/features/catalog/model/catalogGeneratedUi.actions.ts`
-- Изменить или создать: `src/pages/catalog/CatalogGeneratedPage.tsx`
+Проверить:
 
-- [ ] **Шаг 1: Создать state bridge**
+- `src/components/**/*`;
+- hooks рядом с components/screens;
+- `useQuery`, `useMutation`, `useEffect`, `useMemo`;
+- API/services;
+- XML/GraphQL/REST normalizers, если они уже есть;
+- tables, filters, pagination, modal/side page flows;
+- task parameter cards/radio groups/rules.
 
-Ответственность bridge:
+Команды:
 
-- отдавать `state.ui` в `StateProvider`;
-- обновлять только UI state, которым владеет store;
-- не давать components прямой доступ к Zustand internals.
+```bash
+rg -n "useQuery|useMutation|useEffect|useMemo|fetch|axios|columns|rows|filter|pagination|pageSize|modal|drawer|sidePage|SidePage|rules|normalize|XML|GraphQL" src
+```
 
-- [ ] **Шаг 2: Создать action registry**
+```bash
+rg -n "export function|export const|React.FC|forwardRef" src/components
+```
 
-Каждый JSON action id мапится на один store action:
+Результат: `docs/a2ui-components-inventory.md`.
+
+Формат:
+
+```md
+# A2UI Components Inventory
+
+| Component | Path | Current owner | Props source | Has business logic | Candidate A2UI type | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `Button` | `src/components/Button/Button.tsx` | shared UI | props | no | `Button` | ready |
+| `DataTable` | `src/components/DataTable/DataTable.tsx` | shared UI | props + hook | pagination/sort in hook | `DataTable` | needs adapter |
+| `TaskParamsCard` | `src/components/TaskParamsCard/index.tsx` | task screen | hook | rules/modal/update | proposed | split logic |
+```
+
+---
+
+## Stage 1: Component Registry и Component Catalog
+
+**Цель:** дать LLM компактный список разрешённых UI-компонентов, а runtime - allowlist.
+
+Файлы:
+
+- `src/a2ui/registry/componentRegistry.ts`;
+- `src/a2ui/catalog/component-catalog.md`;
+- adapters рядом с `a2ui/registry/adapters/` или `components/`.
+
+Пример registry:
 
 ```ts
-export function createCatalogGeneratedUiActions(store: CatalogGeneratedUiStoreApi) {
+export const componentRegistry = {
+  DataTable: {
+    component: DataTableAdapter,
+    propsSchema: dataTablePropsSchema,
+  },
+  RadioParamGroup: {
+    component: RadioParamGroupAdapter,
+    propsSchema: radioParamGroupPropsSchema,
+  },
+  ModalParamEditor: {
+    component: ModalParamEditorAdapter,
+    propsSchema: modalParamEditorPropsSchema,
+  },
+  SidePageLauncher: {
+    component: SidePageLauncherAdapter,
+    propsSchema: sidePageLauncherPropsSchema,
+  },
+};
+```
+
+Пример `component-catalog.md`:
+
+````md
+## `RadioParamGroup`
+
+Use for task parameter radio choices controlled by rules.
+
+Props:
+
+```ts
+type RadioParamGroupProps = {
+  param: string;
+  value: string | null;
+  options: Array<{ label: string; value: string; disabled?: boolean }>;
+  disabled?: boolean;
+  onChangeAction: string;
+};
+```
+
+Rules:
+
+- does not fetch task;
+- does not compute options;
+- options come from rules output;
+- emits `onChangeAction` only.
+````
+
+---
+
+## Stage 2: Action Registry
+
+**Цель:** LLM не должна придумывать действия. Она выбирает только из разрешённых action contracts.
+
+Файлы:
+
+- `src/a2ui/registry/actionRegistry.ts`;
+- `src/a2ui/catalog/action-catalog.md`;
+- `src/a2ui/schema/action.schema.ts`.
+
+Пример:
+
+```ts
+export const actionRegistry = {
+  "task.updateParam": {
+    payloadSchema: z.object({
+      taskId: z.string(),
+      param: z.string(),
+      value: z.unknown(),
+    }),
+  },
+  "modal.open": {
+    payloadSchema: z.object({
+      modalId: z.string(),
+      params: z.record(z.string(), z.unknown()).optional(),
+    }),
+  },
+  "sidePage.open": {
+    payloadSchema: z.object({
+      sidePageId: z.string(),
+      params: z.record(z.string(), z.unknown()).optional(),
+    }),
+  },
+  "state.set": {
+    payloadSchema: z.object({
+      path: z.string(),
+      value: z.unknown(),
+    }),
+  },
+};
+```
+
+Runtime может исполнять эти actions через screen store/action handlers. JSON не содержит inline functions.
+
+---
+
+## Stage 3: Data Contracts вместо хаотичных fetch в компонентах
+
+**Цель:** описывать данные как контракт, но реализацию держать в TypeScript.
+
+Файлы:
+
+- `src/a2ui/registry/dataContractRegistry.ts`;
+- `src/a2ui/catalog/data-contracts.md`;
+- screen-level `spec/data-contracts.md`;
+- screen/entity normalizers and dependencies.
+
+Пример data contract:
+
+```ts
+export const dataContractRegistry = {
+  "task.getById": {
+    inputSchema: z.object({ taskId: z.string() }),
+    outputSchema: taskModelSchema,
+  },
+  "task.getRules": {
+    inputSchema: z.object({ taskId: z.string() }),
+    outputSchema: taskRulesModelSchema,
+  },
+};
+```
+
+Screen dependency использует TanStack Query:
+
+```ts
+export function createTaskDetailsDependencies(queryClient: QueryClient) {
   return {
-    setType: (value: Option | null) => store.getState().setType(value),
-    setStatus: (value: Option | null) => store.getState().setStatus(value),
-    applyFilters: () => store.getState().applyFilters(),
-    resetFilters: () => store.getState().resetFilters(),
-    closeModal: () => store.getState().closeModal(),
-    closeSidePage: () => store.getState().closeSidePage(),
+    getTask: async ({ taskId }: { taskId: string }) => {
+      const raw = await queryClient.ensureQueryData({
+        queryKey: taskDetailsQueryKeys.task(taskId),
+        queryFn: () => taskApi.getById({ taskId }),
+      });
+
+      return normalizeTaskFromXml(raw);
+    },
   };
 }
 ```
 
-Использовать реальные action names из `catalog.schema.json` после Задачи 9.
-
-- [ ] **Шаг 3: Подключить page wrapper**
-
-Ответственность `CatalogGeneratedPage`:
-
-- создать или импортировать catalog store;
-- один раз вызвать `store.getState().init()` для screen init;
-- передать state bridge в `StateProvider`;
-- передать schema и registries в `GeneratedScreen`.
-
-- [ ] **Шаг 4: Запустить smoke test**
-
-Ожидаемо:
-
-- page рендерится с initial loading state;
-- ни один component не импортирует feature API напрямую;
-- ни один JSON action id не отсутствует в registry.
+Важно: schema может ссылаться на `"task.getById"`, но fetch/queryFn/normalization остаются в TypeScript.
 
 ---
 
-## Задача 8: Перевести Catalog JSON на controlled store bindings
+## Stage 4: Rules format
 
-**Файлы:**
+**Цель:** вынести условия из компонентов в декларативный rules format, который LLM может генерировать и который можно тестировать.
 
-- Изменить или создать: `src/pages/catalog/catalog.schema.json`
-- Изменить: документацию catalog component catalog, если она есть
+Файлы:
 
-- [ ] **Шаг 1: Заменить inline logic на state bindings**
+- `src/a2ui/schema/rules.schema.ts`;
+- `src/entities/task/rules/taskRules.ts` или `src/screens/<screen>/model/rules/*`;
+- `resolveRules.ts`;
+- tests.
 
-Разрешено:
-
-```json
-{
-  "value": { "$state": "/form/filters/type" },
-  "options": { "$state": "/data/typeOptions" },
-  "loading": { "$state": "/loading/typeOptions" },
-  "onChangeAction": "setType"
-}
-```
-
-Заблокировано:
-
-```json
-{
-  "fetch": "/api/catalog/types",
-  "onChange": "if type then reset owner",
-  "columns": "buildColumns(response.meta)"
-}
-```
-
-- [ ] **Шаг 2: Привязать таблицу только к view model**
-
-Catalog table JSON должен читать:
-
-```json
-{
-  "columns": { "$state": "/data/catalogTable/columns" },
-  "rows": { "$state": "/data/catalogTable/rows" },
-  "loading": { "$state": "/loading/catalogTable" }
-}
-```
-
-- [ ] **Шаг 3: Привязать open state modal и side page**
-
-JSON должен читать store state и вызывать action ids:
-
-```json
-{
-  "openedWhenEquals": {
-    "state": "/ui/openedModal",
-    "value": "editCatalogItemModal"
-  },
-  "onCloseAction": "closeModal"
-}
-```
-
-- [ ] **Шаг 4: Проверить registry coverage**
-
-Выполнить или вручную применить `docs/prompt-packs/json-render/00-validate-catalog-coverage.md`.
-
-Ожидаемо: каждый component type, action id, state path, store binding и resolver задокументирован и зарегистрирован.
-
----
-
-## Задача 9: Упростить или удалить legacy hooks
-
-**Файлы:**
-
-- Изменить: `src/features/catalog/hooks/*.ts`
-- Изменить: текущие consumers, найденные в Задаче 1
-
-- [ ] **Шаг 1: Заменить internals hooks**
-
-Разрешенный hook после миграции:
+Пример:
 
 ```ts
-export function useCatalogFilters() {
-  return useStore(catalogGeneratedUiStore, (state) => ({
-    filters: state.ui.form.filters,
-    typeOptions: state.ui.data.typeOptions,
-    statusOptions: state.ui.data.statusOptions,
-    setType: state.setType,
-    setStatus: state.setStatus,
-    applyFilters: state.applyFilters,
-    resetFilters: state.resetFilters,
+export const taskRules = [
+  {
+    id: "cash-counterparty-pay-party-role",
+    when: {
+      all: [
+        { field: "TRANSFER_TYPE", equals: "CASH" },
+        { field: "PAY_PARTY_ROLE", equals: "COUNTERPARTY" },
+      ],
+    },
+    then: {
+      fields: {
+        PAY_PARTY_ROLE: {
+          visible: true,
+          disabled: false,
+          options: ["COUNTERPARTY", "OUR_SIDE"],
+        },
+      },
+    },
+  },
+];
+```
+
+Тест:
+
+```ts
+it("shows PAY_PARTY_ROLE field for CASH and COUNTERPARTY", () => {
+  const result = resolveRules({
+    TRANSFER_TYPE: "CASH",
+    PAY_PARTY_ROLE: "COUNTERPARTY",
+  });
+
+  expect(result.fields.PAY_PARTY_ROLE.visible).toBe(true);
+  expect(result.fields.PAY_PARTY_ROLE.disabled).toBe(false);
+});
+```
+
+---
+
+## Stage 5: Normalizers и fixtures
+
+**Цель:** LLM может помогать генерировать normalizers из XML/GraphQL/REST, но каждый normalizer должен иметь fixtures и tests.
+
+Файлы:
+
+- `src/entities/task/normalizers/normalizeTaskFromXml.ts`;
+- `src/entities/task/fixtures/taskXml.fixture.ts`;
+- `src/entities/task/normalizers/normalizeTaskFromXml.test.ts`.
+
+Пример:
+
+```ts
+export function normalizeTaskFromXml(raw: XmlTaskResponse): TaskModel {
+  return {
+    id: raw.Task.Id,
+    transferType: raw.Task.Parameters.TRANSFER_TYPE,
+    payPartyRole: raw.Task.Parameters.PAY_PARTY_ROLE,
+    status: raw.Task.Status,
+    counterpartyName: raw.Task.Counterparty.Name,
+  };
+}
+```
+
+Тест обязателен:
+
+```ts
+it("maps TRANSFER_TYPE and PAY_PARTY_ROLE", () => {
+  const result = normalizeTaskFromXml(xmlFixture);
+
+  expect(result.transferType).toBe("CASH");
+  expect(result.payPartyRole).toBe("COUNTERPARTY");
+});
+```
+
+---
+
+## Stage 6: Screen schema и store
+
+**Цель:** screen schema описывает UI, а store владеет screen-state и orchestration.
+
+Файлы:
+
+- `src/screens/task-details/taskDetails.schema.ts`;
+- `src/screens/task-details/TaskDetailsGeneratedPage.tsx`;
+- `src/screens/task-details/model/taskDetailsStore.ts`;
+- `src/screens/task-details/model/taskDetails.actions.ts`;
+- `src/screens/task-details/model/taskDetails.types.ts`.
+
+Пример schema:
+
+```ts
+export const taskDetailsSchema = {
+  id: "task-details",
+  inputs: {
+    taskId: "string",
+  },
+  data: {
+    task: {
+      contract: "task.getById",
+      params: {
+        taskId: "$inputs.taskId",
+      },
+    },
+    rules: {
+      contract: "task.getRules",
+      params: {
+        taskId: "$inputs.taskId",
+      },
+    },
+  },
+  sections: [
+    {
+      id: "payment-params",
+      title: "Payment parameters",
+      visibleWhen: {
+        field: "$data.task.transferType",
+        equals: "CASH",
+      },
+      children: [
+        {
+          component: "RadioParamGroup",
+          param: "PAY_PARTY_ROLE",
+          value: "$data.task.payPartyRole",
+          options: "$data.rules.fields.PAY_PARTY_ROLE.options",
+          disabled: "$data.rules.fields.PAY_PARTY_ROLE.disabled",
+          onChange: {
+            action: "task.updateParam",
+            payload: {
+              taskId: "$inputs.taskId",
+              param: "PAY_PARTY_ROLE",
+              value: "$event.value",
+            },
+          },
+        },
+      ],
+    },
+  ],
+};
+```
+
+Если screen должен работать строго через Zustand store, `data` можно компилировать в store dependencies. Важно, чтобы runtime не исполнял произвольный JS и не ходил в raw API из компонента.
+
+---
+
+## Stage 7: LLM prompts/examples/validators
+
+**Цель:** дать LLM маленький, строгий контекст вместо всего проекта.
+
+Файлы:
+
+```text
+src/a2ui/llm/
+  prompts/
+    generate-screen.prompt.md
+    generate-rules.prompt.md
+    generate-normalizer.prompt.md
+    generate-tests.prompt.md
+  examples/
+    task-card.example.ts
+    table-with-pagination.example.ts
+    radio-with-modal.example.ts
+  validators/
+    validateGeneratedSchema.ts
+    validateGeneratedRules.ts
+    validateGeneratedTests.ts
+```
+
+Prompt должен включать:
+
+- available components;
+- available actions;
+- available data contracts;
+- allowed condition format;
+- examples;
+- запрет arbitrary JavaScript;
+- output format;
+- validation expectations.
+
+Пример prompt-фрагмента:
+
+```md
+You are generating A2UI screen schema.
+
+Available components:
+- DataTable
+- RadioParamGroup
+- ModalParamEditor
+- SidePageLauncher
+
+Available actions:
+- task.updateParam
+- modal.open
+- sidePage.open
+- state.set
+
+Available data:
+- $inputs.taskId
+- $data.task.transferType
+- $data.task.payPartyRole
+- $data.rules.fields
+
+Rules:
+- Do not generate arbitrary JavaScript.
+- Use declarative conditions only.
+- Return only TypeScript object.
+```
+
+---
+
+## Stage 8: Перенос бизнес-логики из hooks
+
+Переносить по категориям.
+
+### 8.1 Components inventory
+
+Из `components/` и hooks вынести:
+
+- `fetch`/`useQuery` orchestration;
+- XML/GraphQL parsing;
+- rules calculation;
+- modal/side page routing;
+- task update flow;
+- query invalidation;
+- table columns/rows mapping.
+
+### 8.2 Store/use-case layer
+
+Перенести в:
+
+- screen store actions;
+- entity/screen use-cases;
+- normalizers;
+- rules resolver;
+- mappers;
+- query dependencies.
+
+### 8.3 Legacy hooks
+
+Legacy hooks могут остаться временно только как adapters:
+
+```ts
+export function useTaskDetailsScreen() {
+  return useStore(taskDetailsStore, (state) => ({
+    task: state.ui.data.task,
+    rules: state.ui.data.rules,
+    updateParam: state.updateParam,
   }));
 }
 ```
 
-Не разрешено:
+Не оставлять:
 
 ```ts
-export function useCatalogFilters() {
-  useEffect(() => {
-    fetch("/api/catalog/types");
-  }, []);
-}
+useQuery(...);
+useEffect(() => resolveRules(...), [...]);
+useMemo(() => buildColumns(...), [...]);
 ```
 
-- [ ] **Шаг 2: Удалить неиспользуемые hooks**
-
-После того как все consumers используют store/selectors/generated page, удалить hooks, которые только оборачивают удаленную логику.
-
-- [ ] **Шаг 3: Найти остатки старой логики**
-
-Выполнить:
-
-```bash
-rg -n "fetch|axios|useEffect|useMemo|columns|rows|reset.*filter|open.*Modal|open.*SidePage" src/features/catalog src/pages/catalog
-```
-
-Ожидаемо: оставшиеся совпадения относятся только к presentation-only логике или явно обоснованы.
+если это уже перенесено в A2UI/store/use-case слой.
 
 ---
 
-## Задача 10: End-to-end проверка
+## Stage 9: MVP
 
-**Файлы:**
+Начать с одного сценария:
 
-- Изменить или создать: `src/pages/catalog/CatalogGeneratedPage.test.tsx`
-- Изменить или создать: generated-ui runtime tests, если они есть в проекте
-
-- [ ] **Шаг 1: Unit tests**
-
-Выполнить:
-
-```bash
-pnpm test src/features/catalog/model
+```text
+Task parameters card
+  -> radio buttons
+  -> modal
+  -> side page
+  -> update param
+  -> refetch rules/task
 ```
 
-Ожидаемо:
+Для MVP сделать:
 
-- dependent filters проходят;
-- table resolver проходит;
-- modal/side page action tests проходят;
-- submit action tests проходят.
-
-- [ ] **Шаг 2: Typecheck**
-
-Выполнить:
-
-```bash
-pnpm typecheck
-```
-
-Ожидаемо: команда проходит успешно.
-
-- [ ] **Шаг 3: Lint**
-
-Выполнить:
-
-```bash
-pnpm lint
-```
-
-Ожидаемо: команда проходит успешно.
-
-- [ ] **Шаг 4: Runtime smoke**
-
-Запустить приложение командой проекта из `package.json`, открыть catalog page и проверить:
-
-- initial filter options загружаются на init;
-- изменение родительского фильтра очищает downstream filters и options;
-- таблица не перезагружается при каждом input change;
-- клик по apply загружает таблицу;
-- reset очищает draft filters и table state согласно spec;
-- modal/side page открываются и закрываются из store state;
-- submit success закрывает surface и обновляет затронутые data;
-- submit error видим и не закрывает surface молча.
+1. Component registry для нужных компонентов.
+2. Action registry: `task.updateParam`, `modal.open`, `sidePage.open`, `state.set`.
+3. Data contracts: `task.getById`, `task.getRules`.
+4. Rules format + resolver.
+5. Normalizer для одного реального XML/GraphQL/REST ответа.
+6. Screen schema.
+7. Fixtures.
+8. Unit tests для rules/normalizer/store.
+9. Prompt examples для LLM.
+10. Validator generated schema.
 
 ---
 
-## Чеклист миграции
+## Stage 10: Проверка
 
-- [ ] Каждый API call вынесен из visual components и JSON.
-- [ ] Каждый старый hook с business logic либо удален, либо сведен к thin selector adapter.
-- [ ] Каждый reset зависимого фильтра покрыт store tests.
-- [ ] Table rows и columns строятся TypeScript resolver/mappers.
-- [ ] JSON читает только state `/form`, `/data`, `/loading`, `/errors`, `/ui`.
-- [ ] JSON вызывает только action names, без raw functions или inline business logic.
-- [ ] Component registry блокирует неизвестные component types.
-- [ ] Action registry блокирует неизвестные action ids.
-- [ ] Source adapters/resolvers скрывают XML/GraphQL/raw endpoint specifics от components.
-- [ ] Store tests могут выполняться без React rendering.
+Проверить:
+
+- generated schema проходит Zod/JSON Schema validation;
+- schema использует только registered components;
+- actions есть в action registry;
+- data contracts есть в data contract registry;
+- conditions декларативные, без JS;
+- normalizers покрыты fixtures/tests;
+- rules покрыты unit tests;
+- screen store покрывает modal/side page/update/refetch flow;
+- runtime не вызывает LLM;
+- components не делают business fetch/parse/rules/update/invalidation.
+
+Поиск остатков:
+
+```bash
+rg -n "useQuery|useMutation|useEffect|useMemo|fetch\\(|axios|columns|rows|resolveRules|normalize|invalidateQueries|open.*Modal|open.*SidePage" src
+```
+
+Каждое совпадение классифицировать:
+
+- legacy временно оставлено;
+- presentation-only;
+- перенесено в A2UI/use-case слой;
+- требует переноса;
+- false positive.
 
 ---
 
-## Порядок выполнения
+## Итоговая стратегия
 
-1. Задача 1: инвентаризация и согласование.
-2. Задача 2: shared types.
-3. Задача 3: store skeleton.
-4. Задача 4: dependent filters.
-5. Задача 5: table resolver и mappers.
-6. Задача 6: modal, side page и submit actions.
-7. Задача 7: StateProvider bridge и action registry.
-8. Задача 8: JSON controlled bindings.
-9. Задача 9: cleanup legacy hooks.
-10. Задача 10: verification.
+Не просить LLM писать React-компоненты с нуля.
 
-Не начинать имплементацию до того, как инвентаризация подтвердит реальные catalog filters, actions, API contracts и UI states.
+Просить LLM генерировать:
+
+- schema;
+- rules;
+- normalizers;
+- fixtures;
+- tests;
+- docs;
+- component requests.
+
+`catalog` здесь - это не feature module, а registry/contract layer для существующих UI components и LLM. A2UI/json render оправдан именно потому, что он задаёт строгий формат, который можно валидировать, тестировать и ревьюить.
