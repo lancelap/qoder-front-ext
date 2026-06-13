@@ -16,20 +16,45 @@ Create or review deterministic A2UI/json-render artifacts using project-owned co
 Require:
 
 1. Analyst spec with Given/When/Then scenarios.
-2. Data contracts for every screen input, app-level data object, async query dependency, resolver, and business action.
-3. API contracts for every async store action, resolver, and business action.
-4. Design reference or designer-approved UI structure.
-5. Component catalog with allowed component types and props contracts.
-6. Source adapter/resolver contracts for transport-specific data such as XML APIs, GraphQL queries, or multiple backend endpoints.
-7. Action registry and payload contracts.
-8. Rules format when schema uses conditions, visibility, disabled, or options logic.
-9. Registry/action/store adapter notes when available.
+2. Design reference or designer-approved UI structure.
+3. Component catalog inventory with allowed component types, props contracts, events, actions, states, and limitations.
+4. Source inventory with existing APIs, hooks, TanStack Query keys, mutations, host/context payloads, raw fields, cache/refetch behavior, and gaps.
+5. Data contracts for every screen input, app-level data object, async query dependency, resolver, and business action.
+6. API contracts for every async store action, resolver, and business action.
+7. Source adapter/resolver contracts for transport-specific data such as XML APIs, GraphQL queries, or multiple backend endpoints.
+8. Action registry and payload contracts.
+9. Rules format when schema uses conditions, visibility, disabled, or options logic.
+10. Registry/action/store adapter notes when available.
 
 If any required input is missing, block generation and ask for the smallest missing contract.
 
+## Required Order
+
+Use this order for generation work:
+
+```text
+Analyst spec / design
+  -> component-catalog.md
+  -> source-inventory.md
+  -> data-contracts.md
+  -> source-adapters.md
+  -> A2UI schema
+  -> review/tests
+```
+
+Do not generate Data Contracts until component catalog and source inventory are available. Do not generate source adapters or screen schema until Data Contracts are available.
+
+## Component Catalog And Source Inventory
+
+Component catalog is the allowlist for UI. It must define component types, import paths, props, allowed data requirements, actions/events, states, permissions/read-only behavior, examples, and limitations.
+
+Source inventory documents raw/source-level facts only: APIs, hooks, query keys, mutations, XML/GraphQL/REST/context payloads, raw fields, existing cache/refetch behavior, existing normalizers, and gaps.
+
+Source inventory is not a UI contract and not a runtime query DSL. A2UI schema must not bind directly to raw source paths from source inventory.
+
 ## Data Contracts
 
-Before generating source adapters or screen schema, require app-level Data Contracts.
+After catalog and source inventory are known, require app-level Data Contracts.
 
 Each screen data contract should define:
 
@@ -67,14 +92,16 @@ Use this boundary:
 ```text
 XML / GraphQL / REST / host context
         |
-source adapters / resolvers / mappers
+source inventory
         |
 Data Contracts / app-level contract
+        |
+source adapters / resolvers / mappers
         |
 A2UI schema / React components
 ```
 
-A2UI schema may reference a data contract or resolver by id and pass explicit app-level params, but it should not encode transport parsing logic. The source adapter/resolver owns mapping from source-specific fields to the normalized contract used by UI components.
+A2UI schema may reference a data contract or resolver by id and pass explicit app-level params, but it should not encode transport parsing logic. The source adapter/resolver owns mapping from source-specific fields in source inventory to the normalized contract used by UI components.
 
 Example:
 
@@ -174,7 +201,7 @@ Check:
 1. JSON is valid and uses the expected schema version.
 2. Every component type exists in registry.
 3. Every prop is allowed by the component contract.
-4. Every data reference, store binding, and resolver reference has a Data Contract, state contract, API contract, or resolver contract.
+4. Every data reference, store binding, and resolver reference has a Data Contract, source inventory entry, state contract, API contract, or resolver contract.
 5. Every action has a handler contract.
 6. Permissions/read-only/visibility behavior matches the analyst spec.
 7. Given/When/Then scenarios are covered by tree, actions, states, and adapters.
@@ -189,6 +216,7 @@ Check:
 Block when:
 
 - a visible UI block has no catalog component;
+- source inventory is missing for data or actions required by the spec;
 - an action has no behavior contract;
 - a data reference, store binding, or resolver reference has no Data Contract, state, API, or resolver contract;
 - a component depends directly on XML/GraphQL/source-specific payload fields instead of app-level props;

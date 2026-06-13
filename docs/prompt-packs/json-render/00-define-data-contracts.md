@@ -1,6 +1,6 @@
 # Define Data Contracts
 
-Use this prompt after analyst requirements are validated and before source adapters/resolvers or A2UI schema are generated.
+Use this prompt after analyst requirements, component catalog, and source inventory are validated, and before source adapters/resolvers or A2UI schema are generated.
 
 ````text
 Ты проектируешь Data Contracts для A2UI/json-render screen.
@@ -21,38 +21,38 @@ Use this prompt after analyst requirements are validated and before source adapt
 - Не пиши raw fetch, raw URL, queryFn, useQuery или query lifecycle внутри JSON/schema.
 - Не используй raw XML / GraphQL / backend paths как UI contract.
 - XML, GraphQL, REST и context payload details должны быть спрятаны за adapter/resolver/normalizer.
+- Не определяй Data Contracts без `component-catalog.md` и `source-inventory.md`.
 - Runtime должен быть deterministic.
 - LLM помогает создать artifacts на этапе разработки, но не принимает runtime UI decisions.
 
 Input:
 - Analyst spec: <path-or-pasted-spec>
-- Existing components/catalog: <path-or-pasted-catalog|none>
-- Existing API hooks/services: <path-or-pasted-api|none>
-- Existing TanStack Query hooks/query keys: <path-or-pasted-query-code|none>
-- Existing stores/hooks: <path-or-pasted-store-hooks|none>
-- Source payload examples: <path-or-pasted-xml-graphql-rest-examples|none>
+- Component catalog: <path-or-pasted-component-catalog>
+- Source inventory: <path-or-pasted-source-inventory>
 - Existing rules: <path-or-pasted-rules|none>
 
 Нужно:
-1. Определить screen inputs.
-2. Определить все data contracts, нужные экрану.
-3. Для каждого contract описать normalized output model.
-4. Для каждого async contract описать TanStack Query ownership:
+1. Проверить, что `component-catalog.md` покрывает UI blocks из spec.
+2. Проверить, что `source-inventory.md` покрывает API/hooks/query/context sources, нужные spec.
+3. Определить screen inputs.
+4. Определить все data contracts, нужные экрану.
+5. Для каждого contract описать normalized output model.
+6. Для каждого async contract описать TanStack Query ownership:
    - query key;
    - params;
    - enabled condition;
    - stale/cache policy if known;
    - loading/empty/error states;
    - invalidation triggers.
-5. Описать mutation/action contracts:
+7. Описать mutation/action contracts:
    - payload;
    - response;
    - success behavior;
    - error behavior;
    - refetch/invalidation behavior.
-6. Описать resolver contracts, если screen/schema должны ссылаться на derived data.
-7. Отдельно перечислить required normalizers, fixtures и tests.
-8. Пометить blockers, если аналитика/API/source payload не дают описать contract безопасно.
+8. Описать resolver contracts, если screen/schema должны ссылаться на derived data.
+9. Отдельно перечислить required normalizers, fixtures и tests.
+10. Пометить blockers, если catalog/source inventory/аналитика не дают описать contract безопасно.
 
 Output:
 
@@ -112,6 +112,11 @@ Used by:
 - component:
 - scenario:
 
+Source inventory mapping:
+- source id:
+- raw fields/actions used:
+- normalizer/resolver needed:
+
 Required artifacts:
 - normalizer:
 - fixture:
@@ -147,6 +152,11 @@ Error behavior:
 
 Invalidation/refetch:
 - <contract/query key/action to refresh>
+
+Source inventory mapping:
+- source id:
+- raw fields/actions used:
+- normalizer/resolver needed:
 
 Required artifacts:
 - API adapter:
@@ -193,9 +203,11 @@ States:
 
 Rules:
 - Data Contract = app-level контракт данных для screen/store/resolver/query.
+- Data Contract должен опираться на `source-inventory.md`; не выдумывай source fields, API, query keys или actions.
+- Data Contract должен учитывать `component-catalog.md`; не добавляй fields/actions/states, которые не нужны spec/catalog.
 - Data Contract может ссылаться на TanStack Query dependency, но не должен описывать raw useQuery implementation inside schema.
 - A2UI/schema может ссылаться на contract id или resolver id, но не должна владеть fetch/query/business logic.
 - UI components consume normalized props only.
 - Если один UI параметр может прийти из нескольких sources, опиши resolver/normalizer priority and fallback.
-- Если missing API/source details мешают безопасному contract, не выдумывай backend behavior; добавь blocking question.
+- Если missing catalog/source/API details мешают безопасному contract, не выдумывай behavior; добавь blocking question.
 ````

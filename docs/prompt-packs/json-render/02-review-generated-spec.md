@@ -8,6 +8,7 @@ Use this prompt after A2UI/json-render schema or related LLM artifacts are gener
 Вход:
 - Analyst spec: <path-or-pasted-spec>
 - Component catalog: <path-or-pasted-catalog>
+- Source inventory: <path-or-pasted-source-inventory>
 - Data contracts: <path-or-pasted-data-contracts>
 - Source adapters/resolvers: <path-or-pasted-source-adapters|none>
 - Registry contract: <path-or-pasted-registry-contract>
@@ -23,7 +24,7 @@ Use this prompt after A2UI/json-render schema or related LLM artifacts are gener
 3. Top-level shape содержит canonical keys: schemaVersion, screen, inputs, data, state, resolvers, actions, rules, tree, metadata.
 4. Все component types есть в registry.
 5. Все props разрешены props schema.
-6. Все data references, store bindings, resolver references и async actions имеют Data Contract/state/API/resolver contract.
+6. Все data references, store bindings, resolver references и async actions имеют Source Inventory/Data Contract/state/API/resolver contract.
 7. Все actions имеют handler/action contract.
 8. Given/When/Then scenarios покрыты tree/actions/states/tests.
 9. Нет invented fields/states/actions/components.
@@ -46,6 +47,7 @@ Scenario coverage:
 | --- | --- | --- |
 
 Runtime readiness:
+- source inventory:
 - data contracts:
 - registry:
 - store adapter:

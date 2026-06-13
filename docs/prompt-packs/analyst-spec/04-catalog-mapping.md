@@ -1,6 +1,6 @@
 # Map Spec To Component Catalog
 
-Use this prompt before generating a `json-render` spec.
+Use this prompt after `json-render/00-inventory-component-catalog.md` and before generating a `json-render` spec.
 
 ```text
 Ты сопоставляешь аналитическую спецификацию и дизайн с каталогом компонентов.
@@ -38,4 +38,5 @@ json-render generation readiness:
 - Не используй компоненты вне catalog.
 - Не заменяй сложный domain component набором generic div/input/table без явного решения frontend owner.
 - Если component props schema не покрывает требования spec, пометь blocked или ready with risks.
+- Если catalog ещё не создан или не содержит нужный component contract, сначала запусти `json-render/00-inventory-component-catalog.md`.
 ```

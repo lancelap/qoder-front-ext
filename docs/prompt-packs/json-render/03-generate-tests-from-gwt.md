@@ -7,6 +7,7 @@ Use this prompt to turn analyst scenarios, A2UI schema, rules, and normalizers i
 
 Вход:
 - Analyst spec: <path-or-pasted-spec>
+- Source inventory: <path-or-pasted-source-inventory>
 - Data contracts: <path-or-pasted-data-contracts>
 - A2UI screen schema: <path-or-pasted-schema>
 - Rules: <path-or-pasted-rules|none>
@@ -28,7 +29,7 @@ Use this prompt to turn analyst scenarios, A2UI schema, rules, and normalizers i
    - loading/empty/error state mapping;
    - invalidation/refetch after mutation;
    - action payload/result contract.
-8. Пометить gaps, если data contracts/schema/rules/normalizers/adapters не дают проверить сценарий.
+8. Пометить gaps, если source inventory/data contracts/schema/rules/normalizers/adapters не дают проверить сценарий.
 
 Вывод:
 - Если framework задан, сгенерируй тестовый файл или test plan в стиле проекта.
@@ -37,6 +38,7 @@ Use this prompt to turn analyst scenarios, A2UI schema, rules, and normalizers i
 Правила:
 - Не выдумывай selectors, если registry не задает test ids.
 - Не выдумывай API mocks вне spec.
+- Не выдумывай source payload fields/actions вне Source Inventory.
 - Не выдумывай query keys, invalidation или action payloads вне Data Contracts.
 - Не тестируй runtime LLM calls; runtime должен быть deterministic.
 - Если scenario cannot be tested, пометь blocked и объясни missing contract.

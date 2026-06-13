@@ -198,6 +198,7 @@
   },
   "metadata": {
     "sourceSpec": "docs/examples/payment-mt-nack-security/spec.md",
+    "sourceInventory": "docs/examples/payment-mt-nack-security/source-inventory.md",
     "dataContracts": "docs/examples/payment-mt-nack-security/data-contracts.md",
     "sourceAdapters": "docs/examples/payment-mt-nack-security/source-adapters.md",
     "catalog": "docs/examples/payment-mt-nack-security/component-catalog.md",

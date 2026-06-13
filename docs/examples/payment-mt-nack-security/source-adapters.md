@@ -5,9 +5,13 @@
 ```text
 task/confo payload
         |
+source inventory
+        |
+data contracts
+        |
 source adapters / resolvers
         |
-data contracts / app-level contract
+app-level contract
         |
 json-render / React catalog components
 ```
@@ -24,8 +28,7 @@ Implements contract:
 
 Sources:
 
-- `task-context`: host task payload.
-- `confo-context`: host confo payload.
+- `paymentMtNack.hostContext`: host task/confo payload from `source-inventory.md`.
 
 Input params:
 
@@ -73,8 +76,7 @@ Implements contract:
 
 Sources:
 
-- `task-context`: task step.
-- `confo-context`: MT rejection fields.
+- `paymentMtNack.hostContext`: host task/confo payload from `source-inventory.md`.
 
 Input params:
 

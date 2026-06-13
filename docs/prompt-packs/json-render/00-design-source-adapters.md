@@ -8,12 +8,13 @@ Use this prompt after `00-define-data-contracts.md` when existing app-level Data
 Вход:
 - Analyst spec: <path-or-pasted-spec>
 - Data contracts: <path-or-pasted-data-contracts>
+- Source inventory: <path-or-pasted-source-inventory>
 - Backend/API notes: <xml-api|graphql-query|endpoint-docs|pasted-examples>
 - Component catalog: <path-or-pasted-catalog>
 
 Нужно:
 1. Взять app-level contracts из `data-contracts.md` как источник правды.
-2. Найти transport-specific источники данных:
+2. Найти transport-specific источники данных из `source-inventory.md`:
    - XML APIs;
    - GraphQL queries;
    - REST endpoints;
@@ -28,8 +29,9 @@ Use this prompt after `00-define-data-contracts.md` when existing app-level Data
    - error/empty/loading behavior;
    - cache/refetch behavior if needed.
 4. Проверить, что normalized output shape совпадает с `data-contracts.md`.
-5. Проверить, что catalog components получают normalized props, а не raw source payload.
-6. Пометить blockers, если source path или output shape неизвестны.
+5. Проверить, что raw source paths/actions существуют в `source-inventory.md`.
+6. Проверить, что catalog components получают normalized props, а не raw source payload.
+7. Пометить blockers, если source path или output shape неизвестны.
 
 Output:
 
@@ -67,6 +69,7 @@ Used by:
 
 Rules:
 - Не определяй новый app-level contract внутри source adapters, если его нет в `data-contracts.md`.
+- Не используй source path/action, которого нет в `source-inventory.md`.
 - Не прокидывай raw XML/GraphQL/source-specific payload напрямую в UI component.
 - Если один параметр может прийти из нескольких sources, resolver должен нормализовать приоритет и fallback.
 - Если component сам делает fetch по normalized id, resolver должен вернуть только этот id и documented metadata.

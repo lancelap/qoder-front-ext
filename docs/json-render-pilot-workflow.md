@@ -2,7 +2,7 @@
 
 This workflow validates spec-driven UI generation before connecting runtime libraries or adding platform infrastructure.
 
-The goal is to prove that an analyst spec, data contracts, source adapters, component catalog, generated `screen.render.json`, and project `registry.tsx` can describe one real screen without inventing behavior.
+The goal is to prove that an analyst spec, component catalog, source inventory, data contracts, source adapters, generated `screen.render.json`, and project `registry.tsx` can describe one real screen without inventing behavior.
 
 ## Artifacts
 
@@ -45,11 +45,36 @@ Must include for each component:
 
 If the screen needs a complex component that is not in the catalog, create a separate component spec before generating the screen.
 
+Use `docs/prompt-packs/json-render/00-inventory-component-catalog.md`.
+
+### `source-inventory.md`
+
+Owned by frontend/backend integration maintainers.
+
+Use this before `data-contracts.md`.
+
+Must include:
+
+- existing REST/GraphQL/XML APIs;
+- existing API services/hooks;
+- existing TanStack Query hooks and query keys;
+- existing mutations/actions;
+- host/context payload examples;
+- raw source params and raw output fields;
+- loading/empty/error semantics when known;
+- cache/refetch/invalidation behavior when known;
+- existing normalizers/mappers when available;
+- gaps and blocking questions.
+
+`source-inventory.md` is not a UI contract and not a runtime query DSL. It documents source facts so Data Contracts do not have to guess.
+
+Use `docs/prompt-packs/json-render/00-inventory-data-sources.md`.
+
 ### `data-contracts.md`
 
 Owned by frontend and backend integration maintainers.
 
-Use this before source adapters/resolvers or A2UI schema generation.
+Use this after `component-catalog.md` and `source-inventory.md`, before source adapters/resolvers or A2UI schema generation.
 
 Must include:
 
@@ -144,24 +169,27 @@ The registry is the allowlist. If a component type is not registered, generation
 3. Review scenarios with `analyst-spec/01-review-gwt.md`.
 4. Review API contracts with `analyst-spec/02-review-api.md`.
 5. Review UI states with `analyst-spec/03-review-ui-states.md`.
-6. Map UI blocks to components with `analyst-spec/04-catalog-mapping.md`.
-7. Define `data-contracts.md` with `json-render/00-define-data-contracts.md`.
-8. Create or update `source-adapters.md` for XML/GraphQL/multiple-endpoint mappings.
-9. Design source adapters with `json-render/00-design-source-adapters.md`.
-10. Create or update `component-catalog.md`.
-11. Validate catalog and resolver coverage with `json-render/00-validate-catalog-coverage.md`.
-12. Generate `screen.render.json` with `json-render/01-generate-json-render-spec.md`.
-13. Review generated JSON with `json-render/02-review-generated-spec.md`.
-14. Draft tests from Given/When/Then with `json-render/03-generate-tests-from-gwt.md`.
-15. Only after the pilot JSON passes review, connect `@json-render/react` in a project branch.
+6. Create or update `component-catalog.md` with `json-render/00-inventory-component-catalog.md`.
+7. Create `source-inventory.md` with `json-render/00-inventory-data-sources.md`.
+8. Map UI blocks to components with `analyst-spec/04-catalog-mapping.md`.
+9. Define `data-contracts.md` with `json-render/00-define-data-contracts.md`.
+10. Create or update `source-adapters.md` for XML/GraphQL/multiple-endpoint mappings.
+11. Design source adapters with `json-render/00-design-source-adapters.md`.
+12. Validate catalog and resolver coverage with `json-render/00-validate-catalog-coverage.md`.
+13. Generate `screen.render.json` with `json-render/01-generate-json-render-spec.md`.
+14. Review generated JSON with `json-render/02-review-generated-spec.md`.
+15. Draft tests from Given/When/Then with `json-render/03-generate-tests-from-gwt.md`.
+16. Only after the pilot JSON passes review, connect `@json-render/react` in a project branch.
 
 ## Acceptance Criteria
 
 - The spec has no blocking Given/When/Then, API, state, or permission gaps.
+- `component-catalog.md` defines every component type that generated schema may use.
+- `source-inventory.md` documents raw sources, actions, cache/refetch behavior, and gaps before Data Contracts are written.
 - `data-contracts.md` defines every app-level data, action, resolver, query/cache, invalidation, and state contract used by the screen.
 - Every UI block maps to an existing or explicitly approved proposed catalog component.
 - `screen.render.json` contains no unregistered component types.
-- Every action, store binding, data reference, and resolver reference in JSON is traceable to `spec.md` and `data-contracts.md`.
+- Every action, store binding, data reference, and resolver reference in JSON is traceable to `spec.md`, `component-catalog.md`, `source-inventory.md`, and `data-contracts.md`.
 - Transport-specific XML/GraphQL/endpoint mappings are isolated in source adapters.
 - UI components consume app-level contracts, not raw source payloads.
 - Complex behavior remains in catalog components, store actions, action handlers, or adapters.

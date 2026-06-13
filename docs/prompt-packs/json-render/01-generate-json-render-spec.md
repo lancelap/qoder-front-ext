@@ -9,6 +9,7 @@ Use this prompt to generate a deterministic A2UI/json-render screen schema from 
 - Analyst spec: <path-or-pasted-spec>
 - Design reference: <pixso-link|screenshot|designer-notes|none>
 - Component catalog: <path-or-pasted-catalog>
+- Source inventory: <path-or-pasted-source-inventory>
 - Data contracts: <path-or-pasted-data-contracts>
 - Source adapters/resolvers: <path-or-pasted-source-adapters|none>
 - Registry contract: <path-or-pasted-registry-contract>
@@ -35,7 +36,7 @@ Output file:
 13. Не генерируй runtime LLM calls.
 14. Conditions/rules должны быть декларативными объектами, не строками JS.
 15. Если нужны normalizer, fixture или tests, верни их как separate artifact requests, а не встраивай business logic в schema.
-16. Если Data Contracts отсутствуют или не покрывают нужные data/actions/resolvers, верни BLOCKED.
+16. Если Component Catalog, Source Inventory или Data Contracts отсутствуют или не покрывают нужные components/data/actions/resolvers, верни BLOCKED.
 
 Output format:
 - Только валидный JSON или TypeScript object, если это явно задано output file.

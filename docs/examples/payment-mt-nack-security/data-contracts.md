@@ -38,7 +38,7 @@ type PaymentMtNackContext = {
 
 Transport source:
 - kind: context
-- source: host task/confo payload
+- source: `paymentMtNack.hostContext` from `source-inventory.md`
 - notes: raw paths are mapped in `source-adapters.md`, not in `screen.render.json`
 
 Query/cache:
@@ -59,6 +59,11 @@ Used by:
 - component: `TradeSidePage`
 - action: `paymentMtNack.finish`
 - scenarios: `open-trade-side-page`, finish scenarios
+
+Source inventory mapping:
+- source id: `paymentMtNack.hostContext`
+- raw fields/actions used: `data.task.id`, `data.task.parameters.STEP`, `data.confo.params.TRADE_ID`
+- normalizer/resolver needed: yes
 
 Required artifacts:
 - normalizer: `getPaymentMtNackContext`
@@ -98,7 +103,7 @@ type PaymentMtNackValidationErrors = ValidationError[];
 
 Transport source:
 - kind: context
-- source: host task/confo payload
+- source: `paymentMtNack.hostContext` from `source-inventory.md`
 - notes: raw rejection fields are mapped in `source-adapters.md`
 
 Query/cache:
@@ -116,6 +121,11 @@ Invalidation/refetch:
 Used by:
 - resolver: `getMtValidationErrors`
 - component: `ValidationErrorsBlock`
+
+Source inventory mapping:
+- source id: `paymentMtNack.hostContext`
+- raw fields/actions used: `data.task.parameters.STEP`, `data.confo.params.MT_CHANNEL_REJECTION_REASON`, `data.confo.params.MT_DOCUMENT_VALIDATION_ERRORS`
+- normalizer/resolver needed: yes
 
 Required artifacts:
 - normalizer: `getMtValidationErrors`
@@ -157,6 +167,11 @@ Error behavior:
 Invalidation/refetch:
 - contract/query key: host task list or host task context, if project runtime exposes it
 - reason: task status changed
+
+Source inventory mapping:
+- source id: `paymentMtNack.hostFinishAction`
+- raw fields/actions used: host finish action payload
+- normalizer/resolver needed: action adapter only
 
 Required artifacts:
 - API/action adapter: `finishPaymentMtNackSecurity`

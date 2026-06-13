@@ -8,6 +8,7 @@ Use this prompt before generating A2UI/json-render schema or related LLM artifac
 Вход:
 - Analyst spec: <path-or-pasted-spec>
 - Component catalog: <path-or-pasted-catalog>
+- Source inventory: <path-or-pasted-source-inventory>
 - Data contracts: <path-or-pasted-data-contracts>
 - Source adapters/resolvers: <path-or-pasted-source-adapters|none>
 - Action registry: <path-or-pasted-action-registry|none>
@@ -19,7 +20,7 @@ Use this prompt before generating A2UI/json-render schema or related LLM artifac
 2. Все component types есть в registry или явно proposed.
 3. Все props, которые нужны spec, разрешены props schema компонента.
 4. Все actions из spec имеют action id и owner.
-5. Все store bindings, data references, resolver references и async actions имеют Data Contract/state/API/resolver contract.
+5. Все store bindings, data references, resolver references и async actions имеют Source Inventory/Data Contract/state/API/resolver contract.
 6. Все permissions/read-only/forbidden rules описаны.
 7. Все required states покрыты spec или catalog component.
 8. XML/GraphQL/разные ручки нормализуются через source adapters/resolvers.
@@ -45,6 +46,7 @@ Allowed assumptions:
 Правила:
 - Если хотя бы один visible block не имеет catalog mapping, verdict blocked.
 - Если action не имеет API/local behavior, verdict blocked.
+- Если source inventory отсутствует для данных/actions, нужных spec, verdict blocked.
 - Если Data Contracts отсутствуют для данных/actions/resolvers, используемых экраном, verdict blocked.
 - Если store binding или resolver reference ссылается на XML/GraphQL/raw endpoint без resolver/app-level contract, verdict blocked.
 - Если condition требует произвольный JS, verdict blocked.

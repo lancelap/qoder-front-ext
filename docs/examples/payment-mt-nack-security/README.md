@@ -5,6 +5,7 @@ This example shows one pilot page built through the `json-render` workflow.
 Artifacts:
 
 - `spec.md` - analyst-facing behavior, API/action contracts, and Given/When/Then scenarios.
+- `source-inventory.md` - raw host context and host action inventory used before Data Contracts.
 - `data-contracts.md` - app-level screen data, resolver, action, query/cache, and test contracts.
 - `source-adapters.md` - resolver contracts that normalize confo/task payloads into app-level data.
 - `component-catalog.md` - page-specific catalog components used by the JSON screen.
@@ -28,9 +29,13 @@ Important boundary:
 ```text
 confo/task payload
         |
+source inventory
+        |
+data contracts
+        |
 source adapters / resolvers
         |
-data contracts / app-level contract: nackContext, tradeId, validationErrors, selectedDecision
+app-level contract: nackContext, tradeId, validationErrors, selectedDecision
         |
 json-render / React catalog components
 ```
