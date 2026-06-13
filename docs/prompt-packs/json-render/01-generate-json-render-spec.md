@@ -11,7 +11,7 @@ Use this prompt to generate a deterministic A2UI/json-render screen schema from 
 - Component catalog: <path-or-pasted-catalog>
 - Source inventory: <path-or-pasted-source-inventory>
 - Data contracts: <path-or-pasted-data-contracts>
-- Source adapters/resolvers: <path-or-pasted-source-adapters|none>
+- Source adapters/resolvers: <path-or-pasted-source-adapters|explicit-not-needed>
 - Registry contract: <path-or-pasted-registry-contract>
 - Action registry: <path-or-pasted-action-registry>
 - Rules format: <path-or-pasted-rules-format|none>
@@ -36,7 +36,11 @@ Output file:
 13. Не генерируй runtime LLM calls.
 14. Conditions/rules должны быть декларативными объектами, не строками JS.
 15. Если нужны normalizer, fixture или tests, верни их как separate artifact requests, а не встраивай business logic в schema.
-16. Если Component Catalog, Source Inventory или Data Contracts отсутствуют или не покрывают нужные components/data/actions/resolvers, верни BLOCKED.
+16. Если Component Catalog, Source Inventory, Data Contracts или Catalog Coverage Review отсутствуют или не покрывают нужные components/data/actions/resolvers, верни BLOCKED.
+17. Не генерируй schema только из `spec.md + data-contracts.md`.
+18. Если `source-adapters.md` отсутствует, а source inventory содержит hooks/XML/GraphQL/REST/context payloads, верни BLOCKED, кроме случая, когда coverage review явно говорит `source adapters explicit-not-needed`.
+19. Не импортируй, не вызывай и не упоминай React hooks как runtime dependency generated schema.
+20. Screen inputs в schema должны соответствовать Screen Inputs из Data Contracts и не должны содержать hook outputs, XML paths, `enrichedXml` fields, confo params или API response fields.
 
 Output format:
 - Только валидный JSON или TypeScript object, если это явно задано output file.
@@ -58,4 +62,5 @@ Output format:
 Если generation blocked:
 - Не генерируй частичный JSON.
 - Верни BLOCKED и список точных missing inputs.
+- Missing inputs должны отдельно перечислять component catalog, source inventory, data contracts, source adapters/explicit-not-needed и catalog coverage review.
 ```

@@ -13,6 +13,9 @@ Use this prompt before Data Contracts. It inventories existing APIs, hooks, quer
 - Source Inventory не является A2UI schema.
 - Source Inventory не должен создавать JSON-owned fetch/query layer.
 - Не пиши raw fetch, queryFn, useQuery или transport parsing logic в A2UI schema.
+- Existing React hooks являются source facts, а не UI contract.
+- Не рекомендуй импортировать или вызывать hooks из A2UI schema/generated screen.
+- Не превращай hook output fields в Screen Inputs.
 - Не нормализуй данные в этом шаге; только опиши существующие sources, fields, behavior и gaps.
 - Не выдумывай backend fields/endpoints/query keys/mutations.
 
@@ -42,6 +45,14 @@ Input:
 6. Отметить какие fields/actions нужны analyst spec.
 7. Отметить unknowns/blockers.
 8. Не принимать решение о финальной UI model; это сделает `00-define-data-contracts.md`.
+9. Для существующих hooks описать их как legacy source:
+   - hook name;
+   - params;
+   - raw output;
+   - loading/empty/error behavior;
+   - query key/cache/refetch/invalidation, если есть;
+   - mutations/actions, если hook их скрывает.
+10. Если hook смешивает fetch, parsing, business rules, UI state, modal/navigation или mutation, пометить `migrationNeeded: true` и указать, что должно переехать в store/resolver/action/Data Contract.
 
 Output:
 
@@ -50,7 +61,7 @@ source-inventory.md:
 ## Source: <source.id>
 
 Kind:
-- <rest|graphql|xml|tanstack-query|service-hook|store-hook|host-context|external-action|unknown>
+- <rest|graphql|xml|tanstack-query|query-hook|legacy-hook|service-hook|store-hook|host-context|external-action|unknown>
 
 Owner:
 - <backend|frontend|host-runtime|unknown>
@@ -96,6 +107,15 @@ States:
 
 Existing normalizers/mappers:
 - <path-or-name|none>
+
+Existing hook details:
+- hook name:
+- hook params:
+- hook output:
+- wraps useQuery:
+- wraps mutation/action:
+- migrationNeeded:
+- migration notes:
 
 Risks:
 - <risk>
@@ -146,4 +166,6 @@ Rules:
 - `data-contracts.md` converts source facts into app-level UI/store/resolver contracts.
 - A2UI schema must not bind directly to raw source paths from `source-inventory.md`.
 - If a source is missing or ambiguous, do not invent it; add a Source Gap.
+- Hook names alone are insufficient. If hook params/output/loading/error/cache behavior are unknown, add a Source Gap.
+- Existing hooks may be used as evidence for source inventory only; do not suggest direct hook usage in Data Contracts or A2UI schema.
 ````

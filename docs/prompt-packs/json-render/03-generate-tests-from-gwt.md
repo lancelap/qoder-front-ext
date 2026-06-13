@@ -14,6 +14,7 @@ Use this prompt to turn analyst scenarios, A2UI schema, rules, and normalizers i
 - Normalizers: <path-or-pasted-normalizers|none>
 - Fixtures: <path-or-pasted-fixtures|none>
 - Registry/store/action adapter notes: <path-or-pasted-notes>
+- Generated artifact review: <path-or-pasted-review|manual-checklist-only>
 - Test framework: <vitest|jest|playwright|manual-checklist>
 
 Нужно:
@@ -36,10 +37,13 @@ Use this prompt to turn analyst scenarios, A2UI schema, rules, and normalizers i
 - Если framework unknown, сгенерируй manual checklist + suggested automation mapping.
 
 Правила:
+- Не генерируй automated tests, пока A2UI schema и generated artifact review не готовы.
+- Если schema/review отсутствуют, верни только manual checklist или BLOCKED, кроме случая, когда пользователь явно просит draft test plan.
 - Не выдумывай selectors, если registry не задает test ids.
 - Не выдумывай API mocks вне spec.
 - Не выдумывай source payload fields/actions вне Source Inventory.
 - Не выдумывай query keys, invalidation или action payloads вне Data Contracts.
+- Не тестируй legacy hooks напрямую, если Source Inventory не отмечает их как implementation surface under test; предпочитай Data Contract/action/resolver behavior.
 - Не тестируй runtime LLM calls; runtime должен быть deterministic.
 - Если scenario cannot be tested, пометь blocked и объясни missing contract.
 ```

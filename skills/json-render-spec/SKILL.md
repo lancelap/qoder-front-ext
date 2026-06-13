@@ -52,13 +52,15 @@ Source inventory documents raw/source-level facts only: APIs, hooks, query keys,
 
 Source inventory is not a UI contract and not a runtime query DSL. A2UI schema must not bind directly to raw source paths from source inventory.
 
+Existing React hooks are source facts, not UI contracts. Inventory hooks by name, params, raw output, loading/empty/error behavior, query key/cache/refetch/invalidation behavior, and hidden mutations/actions. If a hook mixes fetch, parsing, business rules, UI state, modal/navigation, or mutation orchestration, mark the migration boundary instead of using the hook directly from generated schema.
+
 ## Data Contracts
 
 After catalog and source inventory are known, require app-level Data Contracts.
 
 Each screen data contract should define:
 
-- screen inputs and params;
+- screen inputs and params; screen inputs must be external only: route params, host context, explicit props, or user/permissions;
 - normalized output model;
 - owner layer: store, query dependency, resolver, or component-owned adapter;
 - TanStack Query ownership for server-backed data: query key, enabled condition, loading/empty/error behavior, and invalidation/refetch triggers;
@@ -66,6 +68,8 @@ Each screen data contract should define:
 - required normalizers, fixtures, and tests.
 
 Data Contracts may reference existing API hooks, TanStack Query dependencies, or source adapter ids, but they must not put raw `fetch`, raw URLs, `queryFn`, `useQuery`, or transport parsing into schema.
+
+Do not put normalized fields, hook outputs, XML paths, `enrichedXml` fields, confo params, or API response fields into Screen Inputs.
 
 ## Generation Rules
 
@@ -77,6 +81,8 @@ Data Contracts may reference existing API hooks, TanStack Query dependencies, or
 - Keep XML, GraphQL, endpoint-specific field names, and response shapes inside source adapters or resolvers.
 - Components should receive normalized app-level props such as `tradeId`, not transport-specific paths from XML or GraphQL payloads.
 - Do not place raw XML/GraphQL/backend paths in UI component props or resolver params inside schema.
+- Do not import, call, or reference React hooks as runtime dependencies from generated schema.
+- Do not use hook output fields, XML paths, `enrichedXml` fields, confo params, or API response fields as schema inputs.
 - Keep complex behavior inside catalog components, store actions, action handlers, or adapters, not inside JSON.
 - Generate rules as declarative objects, never executable JS strings.
 - Generate normalizers only with fixture-based tests or an explicit artifact request for missing fixtures/tests.
@@ -207,9 +213,11 @@ Check:
 7. Given/When/Then scenarios are covered by tree, actions, states, and adapters.
 8. Missing states or opaque parts are explicit.
 9. Transport-specific mappings are isolated in source adapters/resolvers.
-10. Rules and conditions are declarative and contain no executable JS.
-11. Normalizers have fixtures/tests or are explicit artifact requests.
-12. There are no invented components, fields, actions, states, or hidden behavior.
+10. Screen inputs contain only route params, host context, explicit props, or user/permissions.
+11. Generated schema does not import, call, or reference React hooks as runtime dependencies.
+12. Rules and conditions are declarative and contain no executable JS.
+13. Normalizers have fixtures/tests or are explicit artifact requests.
+14. There are no invented components, fields, actions, states, or hidden behavior.
 
 ## Blocking Conditions
 
@@ -217,8 +225,11 @@ Block when:
 
 - a visible UI block has no catalog component;
 - source inventory is missing for data or actions required by the spec;
+- source inventory lists hook names without params/output/loading/error/cache behavior;
+- legacy hooks are used as UI contracts instead of source inventory facts;
 - an action has no behavior contract;
 - a data reference, store binding, or resolver reference has no Data Contract, state, API, or resolver contract;
+- Screen Inputs include normalized fields, hook outputs, XML paths, `enrichedXml` fields, confo params, or API response fields;
 - a component depends directly on XML/GraphQL/source-specific payload fields instead of app-level props;
 - required UI state is absent from spec/catalog;
 - JSON requires a component prop not supported by its contract;

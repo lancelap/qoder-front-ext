@@ -29,11 +29,14 @@ Use this prompt after A2UI/json-render schema or related LLM artifacts are gener
 8. Given/When/Then scenarios покрыты tree/actions/states/tests.
 9. Нет invented fields/states/actions/components.
 10. XML/GraphQL/source-specific mappings не протекают в UI components или resolver params напрямую.
-11. Missing/opaque/proposed parts явно отмечены, если разрешены.
-12. Conditions/rules декларативные, без arbitrary JS.
-13. Normalizers имеют fixtures/tests или явный artifact request.
-14. Runtime не зависит от LLM для выбора UI.
-15. Schema reviewable: ids stable, names semantic, no duplicated hidden behavior.
+11. Screen Inputs содержат только внешние входы экрана: route params, host context, explicit props, user/permissions.
+12. Screen Inputs не содержат hook outputs, XML paths, `enrichedXml` fields, confo params или API response fields.
+13. Schema не импортирует, не вызывает и не использует React hooks как runtime dependency.
+14. Missing/opaque/proposed parts явно отмечены, если разрешены.
+15. Conditions/rules декларативные, без arbitrary JS.
+16. Normalizers имеют fixtures/tests или явный artifact request.
+17. Runtime не зависит от LLM для выбора UI.
+18. Schema reviewable: ids stable, names semantic, no duplicated hidden behavior.
 
 Вывод:
 
