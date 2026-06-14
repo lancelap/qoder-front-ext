@@ -4,6 +4,21 @@ This workflow validates spec-driven UI generation before connecting runtime libr
 
 The goal is to prove that an analyst spec, component catalog, source inventory, data contracts, source adapters, generated `screen.render.json`, and project `registry.tsx` can describe one real screen without inventing behavior.
 
+## Orchestrator Agent
+
+Use `agents/json-render-orchestrator.md` when starting a task or reviewing generated artifacts.
+
+The orchestrator does not replace prompts. It decides which artifact is ready, which prompt should be used next, and when generation must be blocked.
+
+Use it when:
+
+- starting from analyst requirements;
+- existing hooks, TanStack Query, XML, GraphQL, REST, or host payloads are involved;
+- generated files already exist and need workflow review;
+- it is unclear whether the next step is catalog, source inventory, data contracts, adapters, schema, review, or tests.
+
+Usage guide: `docs/agents/json-render-orchestrator.md`.
+
 ## Artifacts
 
 ### `spec.md`
@@ -163,6 +178,8 @@ export const registry = {
 The registry is the allowlist. If a component type is not registered, generation or runtime render must fail.
 
 ## Pilot Steps
+
+Before generating any artifact, run the orchestrator agent if the current workflow state is unclear.
 
 1. Choose one representative screen.
 2. Write `spec.md` using `analyst-spec/00-create-spec.md`.

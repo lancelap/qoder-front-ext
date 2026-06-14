@@ -2,8 +2,14 @@
 
 Use this index to choose the right prompt pack.
 
+If the next artifact is unclear, start with the orchestrator agent:
+
+- `agents/json-render-orchestrator.md`
+- usage guide: `docs/agents/json-render-orchestrator.md`
+
 | Situation | Use |
 | --- | --- |
+| Need to decide the next safe json-render workflow step | `agents/json-render-orchestrator.md` |
 | Analyst needs to write a frontend-ready spec | `analyst-spec/README.md` |
 | Analyst spec needs Given/When/Then review | `analyst-spec/01-review-gwt.md` |
 | Analyst spec needs API contract review | `analyst-spec/02-review-api.md` |
